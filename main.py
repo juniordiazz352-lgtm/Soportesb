@@ -29,6 +29,16 @@ async def on_ready():
     bot.add_view(TicketView())
     bot.add_view(CloseView())
 
+@bot.event
+async def on_ready():
+    print(f"{bot.user} listo")
+
+    try:
+        synced = await bot.tree.sync()
+        print(f"Comandos sincronizados: {len(synced)}")
+    except Exception as e:
+        print(e)
+
 
 # ⚠️ Manejo de errores global
 @bot.event
