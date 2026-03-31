@@ -14,3 +14,9 @@
 <a href="/create_ticket">➕ Crear Ticket</a>
 <br><br>
 <a href="/logout">Cerrar sesión</a>
+
+<h1>Panel SaaS</h1>
+
+{% for t in tickets %}
+<p>{{ t[3] }} - {{ t[4] }}</p>
+{% endfor %}
