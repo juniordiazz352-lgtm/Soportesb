@@ -1,5 +1,4 @@
-TOKEN = "TU_TOKEN_AQUI"
+import os
 
-TICKET_CATEGORY = "TICKETS"
-STAFF_ROLE = "Soporte"
-LOG_CHANNEL = "logs-tickets"
+TOKEN = os.getenv("TOKEN")
+OWNER_ID = 1272066173810380861  # TU ID
