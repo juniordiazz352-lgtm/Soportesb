@@ -2,6 +2,19 @@ import discord
 from discord.ext import commands
 import asyncio
 import config
+import threading
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Bot activo"
+
+def run_web():
+    app.run(host="0.0.0.0", port=10000)
+
+threading.Thread(target=run_web).start()
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
