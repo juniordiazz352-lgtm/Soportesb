@@ -1,1 +1,5 @@
+TOKEN = "TU_TOKEN_AQUI"
 
+TICKET_CATEGORY = "TICKETS"
+STAFF_ROLE = "Soporte"
+LOG_CHANNEL = "logs-tickets"
