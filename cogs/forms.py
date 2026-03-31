@@ -126,3 +126,43 @@ class Forms(commands.Cog):
 
         await interaction.response.send_message("✅ Panel creado", ephemeral=True)
         await canal.send(embed=embed, view=View(self.bot))
+
+class ReviewView(discord.ui.View):
+    def __init__(self, user, form, respuestas):
+        super().__init__(timeout=None)
+        self.user = user
+        self.form = form
+        self.respuestas = respuestas
+
+    @discord.ui.button(label="Aprobar", style=discord.ButtonStyle.success)
+    async def aprobar(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        embed = discord.Embed(
+            title="✅ Formulario Aprobado",
+            description=f"Aprobado por {interaction.user}",
+            color=discord.Color.green()
+        )
+
+        await self.user.send(embed=embed)
+        await interaction.message.delete()
+
+    @discord.ui.button(label="Rechazar", style=discord.ButtonStyle.danger)
+    async def rechazar(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        await interaction.response.send_message("✏️ Escribe la razón:", ephemeral=True)
+
+        def check(m): return m.author == interaction.user
+        msg = await interaction.client.wait_for("message", check=check)
+
+        embed = discord.Embed(
+            title="❌ Formulario Rechazado",
+            description=f"Rechazado por {interaction.user}\nRazón: {msg.content}",
+            color=discord.Color.red()
+        )
+
+        await self.user.send(embed=embed)
+        await interaction.message.delete()
+
+
+async def setup(bot):
+    await bot.add_cog(Forms(bot))
