@@ -4,6 +4,7 @@ import config
 from flask import Flask, render_template
 from database.db import get_tickets
 
+app.run(debug=True)
 app = Flask(__name__)
 
 @app.route("/dashboard/<guild_id>")
