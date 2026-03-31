@@ -1,5 +1,3 @@
-import discord
-
 async def create_transcript(channel):
     html = "<html><body>"
 
