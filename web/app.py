@@ -4,15 +4,16 @@ import config
 from flask import Flask, render_template
 from database.db import get_tickets
 
-app.run(debug=True)
+
 app = Flask(__name__)
 
 @app.route("/dashboard/<guild_id>")
 def dashboard(guild_id):
     tickets = get_tickets(guild_id)
     return render_template("dashboard.html", tickets=tickets)
-
-app.run(host="0.0.0.0", port=10000)
+    
+import os
+app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
 app = Flask(__name__)
 app.secret_key = "secret"
