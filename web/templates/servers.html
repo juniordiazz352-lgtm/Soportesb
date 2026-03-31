@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1 class="text-3xl mb-6">Selecciona un servidor</h1>
+
+<div class="grid grid-cols-4 gap-6">
+
+{% for g in guilds %}
+
+<a href="/dashboard/{{ g.id }}"
+class="card p-6 rounded-2xl hover:scale-105 transition duration-300">
+
+<img src="https://cdn.discordapp.com/icons/{{g.id}}/{{g.icon}}.png"
+class="w-16 h-16 rounded-full mb-3">
+
+<p>{{ g.name }}</p>
+
+</a>
