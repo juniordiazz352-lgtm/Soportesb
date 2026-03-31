@@ -20,3 +20,31 @@
 {% for t in tickets %}
 <p>{{ t[3] }} - {{ t[4] }}</p>
 {% endfor %}
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 class="text-3xl font-bold mb-6">Crear Ticket</h1>
+
+<form method="POST" class="bg-gray-800 p-6 rounded-2xl w-96">
+
+<input name="nombre" placeholder="Nombre"
+class="w-full mb-3 p-2 rounded bg-gray-700">
+
+<input name="titulo" placeholder="Título"
+class="w-full mb-3 p-2 rounded bg-gray-700">
+
+<input name="descripcion" placeholder="Descripción"
+class="w-full mb-3 p-2 rounded bg-gray-700">
+
+<input name="emoji" placeholder="Emoji"
+class="w-full mb-3 p-2 rounded bg-gray-700">
+
+<button class="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600">
+Crear
+</button>
+
+</form>
+
+{% endblock %}
