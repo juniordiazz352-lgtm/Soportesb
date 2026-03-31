@@ -2,6 +2,18 @@ import discord
 from discord.ext import commands
 import config
 import asyncio
+import config
+from discord import app_commands
+
+@bot.tree.interaction_check
+async def global_check(interaction):
+    if interaction.user.id != config.OWNER_ID:
+        await interaction.response.send_message(
+            "❌ Este bot es privado.",
+            ephemeral=True
+        )
+        return False
+    return True
 
 intents = discord.Intents.all()
 
