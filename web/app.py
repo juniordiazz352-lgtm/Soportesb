@@ -10,7 +10,11 @@ app = Flask(__name__)
 @app.route("/dashboard/<guild_id>")
 def dashboard(guild_id):
     tickets = get_tickets(guild_id)
-    return render_template("dashboard.html", tickets=tickets)
+    rreturn render_template(
+    "dashboard.html",
+    user=session["user"],
+    tickets=tickets["tickets"]
+)
     
 import os
 app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
