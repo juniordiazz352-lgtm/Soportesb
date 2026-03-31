@@ -24,20 +24,20 @@ class Tickets(commands.Cog):
 
         await interaction.response.send_message("✅ Staff agregado")
 
-    @app_commands.command(name="crear_ticket")
-    async def crear_ticket(self, interaction: discord.Interaction, nombre: str, titulo: str, descripcion: str, emoji: str):
-        if not is_owner(interaction.user):
-            return await interaction.response.send_message("❌ Solo dueño", ephemeral=True)
+    @apfrom database.db import add_ticket
 
-        data = load_data(FILE)
-        data["tickets"][nombre] = {
-            "titulo": titulo,
-            "descripcion": descripcion,
-            "emoji": emoji
-        }
-        save_data(FILE, data)
+@app_commands.command(name="crear_ticket")
+async def crear_ticket(self, interaction, nombre: str, titulo: str, descripcion: str, emoji: str):
 
-        await interaction.response.send_message("✅ Ticket creado")
+    add_ticket(
+        str(interaction.guild.id),
+        nombre,
+        titulo,
+        descripcion,
+        emoji
+    )
+
+    await interaction.response.send_message("✅ Ticket guardado en DB", ephemeral=True)
 
     @app_commands.command(name="panel_ticket")
     async def panel(self, interaction: discord.Interaction, canal: discord.TextChannel, categoria: discord.CategoryChannel, titulo: str, descripcion: str):
