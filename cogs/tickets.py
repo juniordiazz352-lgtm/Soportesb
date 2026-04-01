@@ -15,13 +15,21 @@ def save(file, data):
     with open(file, "w") as f:
         json.dump(data, f, indent=4)
 
+def get_staff(guild_id):
+    data = load("data/staff.json")
+    return data.get(str(guild_id))
+
 class TicketView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Cerrar", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="🔒 Cerrar", style=discord.ButtonStyle.red)
     async def cerrar(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.channel.delete()
+
+    @discord.ui.button(label="👤 Añadir", style=discord.ButtonStyle.gray)
+    async def add(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Menciona usuario", ephemeral=True)
 
 class Tickets(commands.Cog):
     def __init__(self, bot):
@@ -30,8 +38,9 @@ class Tickets(commands.Cog):
     def is_owner(self, i):
         return i.user.id == config.OWNER_ID
 
+    # 👑 STAFF
     @app_commands.command(name="agregar_rol_staff")
-    async def staff(self, i: discord.Interaction, rol: discord.Role):
+    async def add_staff(self, i: discord.Interaction, rol: discord.Role):
         if not self.is_owner(i):
             return await i.response.send_message("❌ Solo owner", ephemeral=True)
 
@@ -41,15 +50,14 @@ class Tickets(commands.Cog):
 
         await i.response.send_message("✅ Staff agregado")
 
+    # 🎫 CREAR TIPO
     @app_commands.command(name="crear_ticket")
-    async def crear(self, i: discord.Interaction, nombre: str, titulo: str, descripcion: str):
+    async def crear_ticket(self, i: discord.Interaction, nombre: str, titulo: str, descripcion: str):
         if not self.is_owner(i):
             return await i.response.send_message("❌ Solo owner", ephemeral=True)
 
         data = load("data/tickets.json")
-        if str(i.guild.id) not in data:
-            data[str(i.guild.id)] = {}
-
+        data.setdefault(str(i.guild.id), {})
         data[str(i.guild.id)][nombre] = {
             "titulo": titulo,
             "descripcion": descripcion
@@ -58,8 +66,18 @@ class Tickets(commands.Cog):
         save("data/tickets.json", data)
         await i.response.send_message("✅ Ticket creado")
 
+    # ❌ ELIMINAR
+    @app_commands.command(name="eliminar_ticket")
+    async def eliminar(self, i: discord.Interaction, nombre: str):
+        data = load("data/tickets.json")
+        data[str(i.guild.id)].pop(nombre, None)
+        save("data/tickets.json", data)
+        await i.response.send_message("🗑️ Eliminado")
+
+    # 🎛️ PANEL
     @app_commands.command(name="panel_ticket")
     async def panel(self, i: discord.Interaction):
+
         data = load("data/tickets.json").get(str(i.guild.id), {})
 
         options = [
@@ -73,10 +91,15 @@ class Tickets(commands.Cog):
 
             async def callback(self, interaction: discord.Interaction):
                 guild = interaction.guild
+
                 overwrites = {
                     guild.default_role: discord.PermissionOverwrite(read_messages=False),
                     interaction.user: discord.PermissionOverwrite(read_messages=True)
                 }
+
+                staff_id = get_staff(guild.id)
+                if staff_id:
+                    overwrites[guild.get_role(staff_id)] = discord.PermissionOverwrite(read_messages=True)
 
                 channel = await guild.create_text_channel(
                     name=f"ticket-{interaction.user.name}",
@@ -85,15 +108,16 @@ class Tickets(commands.Cog):
 
                 await channel.send(
                     f"{interaction.user.mention}",
+                    embed=discord.Embed(title="🎫 Ticket abierto"),
                     view=TicketView()
                 )
 
-                await interaction.response.send_message(f"🎫 Ticket creado: {channel.mention}", ephemeral=True)
+                await interaction.response.send_message(f"Creado {channel.mention}", ephemeral=True)
 
         view = discord.ui.View()
         view.add_item(Menu())
 
-        await i.channel.send("🎫 Panel de tickets", view=view)
+        await i.channel.send("🎫 Panel", view=view)
         await i.response.send_message("✅ Panel creado", ephemeral=True)
 
 async def setup(bot):
