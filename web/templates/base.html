@@ -2,28 +2,16 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Panel SaaS</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<style>
+body { background: #0f172a; }
+.card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+}
+</style>
 </head>
 
-<body class="bg-gray-900 text-white">
+<body class="text-white">
 
 <div class="flex">
-
-<!-- SIDEBAR -->
-<div class="w-64 h-screen bg-gray-800 p-5">
-    <h1 class="text-2xl font-bold mb-10">🔥 SaaS Panel</h1>
-
-    <a href="/dashboard" class="block mb-4 hover:text-blue-400">📊 Dashboard</a>
-    <a href="/create_ticket" class="block mb-4 hover:text-blue-400">🎫 Crear Ticket</a>
-</div>
-
-<!-- CONTENT -->
-<div class="flex-1 p-10">
-    {% block content %}{% endblock %}
-</div>
-
-</div>
-
-</body>
-</html>
