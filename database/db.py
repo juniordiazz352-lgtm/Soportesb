@@ -26,3 +26,24 @@ def add_ticket(guild_id, nombre, titulo, descripcion):
 def get_tickets(guild_id):
     cursor.execute("SELECT nombre, titulo, descripcion FROM tickets WHERE guild_id=?", (guild_id,))
     return cursor.fetchall()
+
+# LOGS
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS logs (
+    guild_id TEXT,
+    log_channel TEXT
+)
+""")
+
+def set_logs(guild_id, channel_id):
+    cursor.execute("DELETE FROM logs WHERE guild_id=?", (guild_id,))
+    cursor.execute(
+        "INSERT INTO logs (guild_id, log_channel) VALUES (?, ?)",
+        (guild_id, channel_id)
+    )
+    conn.commit()
+
+def get_logs(guild_id):
+    cursor.execute("SELECT log_channel FROM logs WHERE guild_id=?", (guild_id,))
+    result = cursor.fetchone()
+    return result[0] if result else None
