@@ -1,36 +1,66 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import json
+from database.db import add_ticket, get_tickets, set_ticket_log, get_ticket_log
 import config
 
-def load(file):
-    try:
-        with open(file) as f:
-            return json.load(f)
-    except:
-        return {}
-
-def save(file, data):
-    with open(file, "w") as f:
-        json.dump(data, f, indent=4)
-
-def get_staff(guild_id):
-    data = load("data/staff.json")
-    return data.get(str(guild_id))
-
-class TicketView(discord.ui.View):
-    def __init__(self):
+# =========================
+# 🔒 CERRAR + TRANSCRIPT
+# =========================
+class CloseView(discord.ui.View):
+    def __init__(self, ticket_name):
         super().__init__(timeout=None)
+        self.ticket_name = ticket_name
 
-    @discord.ui.button(label="🔒 Cerrar", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="Confirmar cierre", style=discord.ButtonStyle.red)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        channel = interaction.channel
+        guild = interaction.guild
+
+        # 📄 TRANSCRIPT
+        messages = []
+        async for msg in channel.history(limit=None, oldest_first=True):
+            messages.append(f"{msg.author}: {msg.content}")
+
+        content = "\n".join(messages)
+
+        file = discord.File(
+            fp=bytes(content, "utf-8"),
+            filename=f"{channel.name}.txt"
+        )
+
+        # 📡 LOGS POR PANEL
+        log_id = get_ticket_log(str(guild.id), self.ticket_name)
+        if log_id:
+            log_channel = guild.get_channel(int(log_id))
+            if log_channel:
+                await log_channel.send(
+                    content=f"📁 Transcript {channel.name}",
+                    file=file
+                )
+
+        await interaction.response.send_message("Ticket cerrado", ephemeral=True)
+        await channel.delete()
+
+# =========================
+# 🎫 BOTONES
+# =========================
+class TicketView(discord.ui.View):
+    def __init__(self, ticket_name):
+        super().__init__(timeout=None)
+        self.ticket_name = ticket_name
+
+    @discord.ui.button(label="Cerrar Ticket", style=discord.ButtonStyle.red)
     async def cerrar(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.channel.delete()
+        await interaction.response.send_message(
+            "¿Seguro?",
+            view=CloseView(self.ticket_name),
+            ephemeral=True
+        )
 
-    @discord.ui.button(label="👤 Añadir", style=discord.ButtonStyle.gray)
-    async def add(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("Menciona usuario", ephemeral=True)
-
+# =========================
+# 🤖 COG
+# =========================
 class Tickets(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -38,51 +68,39 @@ class Tickets(commands.Cog):
     def is_owner(self, i):
         return i.user.id == config.OWNER_ID
 
-    # 👑 STAFF
-    @app_commands.command(name="agregar_rol_staff")
-    async def add_staff(self, i: discord.Interaction, rol: discord.Role):
-        if not self.is_owner(i):
-            return await i.response.send_message("❌ Solo owner", ephemeral=True)
-
-        data = load("data/staff.json")
-        data[str(i.guild.id)] = rol.id
-        save("data/staff.json", data)
-
-        await i.response.send_message("✅ Staff agregado")
-
-    # 🎫 CREAR TIPO
+    # 🔥 CREAR TICKET + LOG
     @app_commands.command(name="crear_ticket")
-    async def crear_ticket(self, i: discord.Interaction, nombre: str, titulo: str, descripcion: str):
+    async def crear_ticket(
+        self,
+        i: discord.Interaction,
+        nombre: str,
+        titulo: str,
+        descripcion: str,
+        canal_logs: discord.TextChannel
+    ):
         if not self.is_owner(i):
             return await i.response.send_message("❌ Solo owner", ephemeral=True)
 
-        data = load("data/tickets.json")
-        data.setdefault(str(i.guild.id), {})
-        data[str(i.guild.id)][nombre] = {
-            "titulo": titulo,
-            "descripcion": descripcion
-        }
+        # guardar ticket
+        add_ticket(str(i.guild.id), nombre, titulo, descripcion)
 
-        save("data/tickets.json", data)
-        await i.response.send_message("✅ Ticket creado")
+        # guardar logs
+        set_ticket_log(str(i.guild.id), nombre, str(canal_logs.id))
 
-    # ❌ ELIMINAR
-    @app_commands.command(name="eliminar_ticket")
-    async def eliminar(self, i: discord.Interaction, nombre: str):
-        data = load("data/tickets.json")
-        data[str(i.guild.id)].pop(nombre, None)
-        save("data/tickets.json", data)
-        await i.response.send_message("🗑️ Eliminado")
+        await i.response.send_message("✅ Ticket + logs configurados")
 
     # 🎛️ PANEL
     @app_commands.command(name="panel_ticket")
     async def panel(self, i: discord.Interaction):
 
-        data = load("data/tickets.json").get(str(i.guild.id), {})
+        tickets = get_tickets(str(i.guild.id))
+
+        if not tickets:
+            return await i.response.send_message("❌ No hay tickets", ephemeral=True)
 
         options = [
-            discord.SelectOption(label=k, description=v["descripcion"])
-            for k, v in data.items()
+            discord.SelectOption(label=t[0], description=t[2])
+            for t in tickets
         ]
 
         class Menu(discord.ui.Select):
@@ -91,34 +109,39 @@ class Tickets(commands.Cog):
 
             async def callback(self, interaction: discord.Interaction):
                 guild = interaction.guild
+                ticket_name = self.values[0]
 
                 overwrites = {
                     guild.default_role: discord.PermissionOverwrite(read_messages=False),
                     interaction.user: discord.PermissionOverwrite(read_messages=True)
                 }
 
-                staff_id = get_staff(guild.id)
-                if staff_id:
-                    overwrites[guild.get_role(staff_id)] = discord.PermissionOverwrite(read_messages=True)
-
                 channel = await guild.create_text_channel(
                     name=f"ticket-{interaction.user.name}",
                     overwrites=overwrites
                 )
 
-                await channel.send(
-                    f"{interaction.user.mention}",
-                    embed=discord.Embed(title="🎫 Ticket abierto"),
-                    view=TicketView()
+                embed = discord.Embed(
+                    title="🎫 Ticket abierto",
+                    description=f"Tipo: {ticket_name}"
                 )
 
-                await interaction.response.send_message(f"Creado {channel.mention}", ephemeral=True)
+                await channel.send(
+                    content=interaction.user.mention,
+                    embed=embed,
+                    view=TicketView(ticket_name)
+                )
+
+                await interaction.response.send_message(
+                    f"Ticket creado: {channel.mention}",
+                    ephemeral=True
+                )
 
         view = discord.ui.View()
         view.add_item(Menu())
 
-        await i.channel.send("🎫 Panel", view=view)
-        await i.response.send_message("✅ Panel creado", ephemeral=True)
+        await i.channel.send("🎫 Panel de tickets", view=view)
+        await i.response.send_message("Panel creado", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(Tickets(bot))
