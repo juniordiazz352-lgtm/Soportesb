@@ -7,10 +7,114 @@ import config
 # =========================
 # 🔒 CERRAR + TRANSCRIPT
 # =========================
+import html
+from datetime import datetime
+
 class CloseView(discord.ui.View):
     def __init__(self, ticket_name):
         super().__init__(timeout=None)
         self.ticket_name = ticket_name
+
+    @discord.ui.button(label="Confirmar cierre", style=discord.ButtonStyle.red)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        channel = interaction.channel
+        guild = interaction.guild
+
+        mensajes_html = ""
+
+        async for msg in channel.history(limit=None, oldest_first=True):
+
+            author = html.escape(str(msg.author))
+            content = html.escape(msg.content)
+            time = msg.created_at.strftime("%d/%m/%Y %H:%M")
+
+            avatar = msg.author.display_avatar.url
+
+            mensajes_html += f"""
+            <div class="msg">
+                <img src="{avatar}" class="avatar">
+                <div>
+                    <div class="header">
+                        <span class="user">{author}</span>
+                        <span class="time">{time}</span>
+                    </div>
+                    <div class="content">{content}</div>
+                </div>
+            </div>
+            """
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+
+body {{
+    background: #0f172a;
+    color: white;
+    font-family: Arial;
+    padding: 20px;
+}}
+
+.msg {{
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}}
+
+.avatar {{
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}}
+
+.user {{
+    font-weight: bold;
+}}
+
+.time {{
+    color: gray;
+    font-size: 12px;
+    margin-left: 10px;
+}}
+
+.content {{
+    margin-top: 3px;
+}}
+
+</style>
+</head>
+<body>
+
+<h2>Transcript - {channel.name}</h2>
+
+{mensajes_html}
+
+</body>
+</html>
+"""
+
+        file = discord.File(
+            fp=bytes(html_content, "utf-8"),
+            filename=f"{channel.name}.html"
+        )
+
+        # 📡 LOGS
+        from database.db import get_ticket_log
+        log_id = get_ticket_log(str(guild.id), self.ticket_name)
+
+        if log_id:
+            log_channel = guild.get_channel(int(log_id))
+            if log_channel:
+                await log_channel.send(
+                    content=f"📁 Transcript HTML {channel.name}",
+                    file=file
+                )
+
+        await interaction.response.send_message("Ticket cerrado", ephemeral=True)
+        await channel.delete()
 
     @discord.ui.button(label="Confirmar cierre", style=discord.ButtonStyle.red)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
