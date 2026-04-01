@@ -1,168 +1,120 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+import json
+import config
 import asyncio
 
-from utils.storage import load_data, save_data
-from utils.checks import is_owner
+def load(file):
+    try:
+        with open(file) as f:
+            return json.load(f)
+    except:
+        return {}
 
-FILE = "data/forms.json"
+def save(file, data):
+    with open(file, "w") as f:
+        json.dump(data, f, indent=4)
+
+class FormView(discord.ui.View):
+    def __init__(self, respuestas, user):
+        super().__init__(timeout=None)
+        self.respuestas = respuestas
+        self.user = user
+
+    @discord.ui.button(label="✅ Aprobar", style=discord.ButtonStyle.green)
+    async def aprobar(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.user.send("✅ Tu formulario fue aprobado")
+        await interaction.response.send_message("Aprobado", ephemeral=True)
+
+    @discord.ui.button(label="❌ Rechazar", style=discord.ButtonStyle.red)
+    async def rechazar(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.user.send("❌ Tu formulario fue rechazado")
+        await interaction.response.send_message("Rechazado", ephemeral=True)
 
 class Forms(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # 🔧 CREAR FORMULARIO PRO
-    @app_commands.command(name="crear_formulario")
-    async def crear_formulario(self, interaction: discord.Interaction):
+    def is_owner(self, i):
+        return i.user.id == config.OWNER_ID
 
-        if not is_owner(interaction.user):
-            return await interaction.response.send_message("❌ Solo dueño", ephemeral=True)
+    # 📋 CREAR
+    @app_commands.command(name="form_crear")
+    async def crear(self, i: discord.Interaction):
+        if not self.is_owner(i):
+            return await i.response.send_message("❌ Solo owner", ephemeral=True)
 
-        await interaction.response.send_message("📝 Título del formulario:", ephemeral=True)
+        await i.response.send_message("Título:")
 
-        def check(m): return m.author == interaction.user
+        def check(m): return m.author == i.user
 
-        msg = await self.bot.wait_for("message", check=check)
-        titulo = msg.content
+        titulo = (await self.bot.wait_for("message", check=check)).content
 
-        await interaction.followup.send("❓ Número de preguntas:", ephemeral=True)
-        msg = await self.bot.wait_for("message", check=check)
-        cantidad = int(msg.content)
+        await i.followup.send("Cantidad preguntas:")
+        n = int((await self.bot.wait_for("message", check=check)).content)
 
         preguntas = []
+        for x in range(n):
+            await i.followup.send(f"Pregunta {x+1}")
+            preguntas.append((await self.bot.wait_for("message", check=check)).content)
 
-        for i in range(cantidad):
-            await interaction.followup.send(f"✏️ Pregunta {i+1}:", ephemeral=True)
-            msg = await self.bot.wait_for("message", check=check)
-            preguntas.append(msg.content)
+        data = load("data/forms.json")
+        data[titulo] = preguntas
+        save("data/forms.json", data)
 
-        # CONFIRMAR
-        confirm_msg = await interaction.followup.send(
-            "✅ ¿Terminar formulario?\n👍 = sí | ❌ = cancelar",
-            ephemeral=True
-        )
+        await i.followup.send("✅ Form creado")
 
-        await confirm_msg.add_reaction("👍")
-        await confirm_msg.add_reaction("❌")
+    # 🎛️ PANEL
+    @app_commands.command(name="panel_form")
+    async def panel(self, i: discord.Interaction):
 
-        def reaction_check(reaction, user):
-            return user == interaction.user and str(reaction.emoji) in ["👍", "❌"]
+        data = load("data/forms.json")
 
-        reaction, _ = await self.bot.wait_for("reaction_add", check=reaction_check)
+        options = [discord.SelectOption(label=k) for k in data.keys()]
 
-        if str(reaction.emoji) == "❌":
-            return await interaction.followup.send("❌ Cancelado", ephemeral=True)
+        class Menu(discord.ui.Select):
+            def __init__(self):
+                super().__init__(placeholder="Selecciona", options=options)
 
-        data = load_data(FILE)
-        form_id = str(len(data) + 1)
+            async def callback(self, interaction: discord.Interaction):
+                preguntas = data[self.values[0]]
 
-        data[form_id] = {
-            "titulo": titulo,
-            "preguntas": preguntas
-        }
-
-        save_data(FILE, data)
-
-        await interaction.followup.send(f"✅ Formulario creado ID: {form_id}", ephemeral=True)
-
-    # 📊 PANEL PRO
-    @app_commands.command(name="panel_formularios")
-    async def panel_formularios(self, interaction: discord.Interaction, canal: discord.TextChannel, descripcion: str):
-
-        if not is_owner(interaction.user):
-            return await interaction.response.send_message("❌ Solo dueño", ephemeral=True)
-
-        data = load_data(FILE)
-
-        options = [
-            discord.SelectOption(label=f["titulo"], value=form_id)
-            for form_id, f in data.items()
-        ]
-
-        class Select(discord.ui.Select):
-            def __init__(self, bot):
-                super().__init__(placeholder="Selecciona formulario", options=options)
-                self.bot = bot
-
-            async def callback(self, inter: discord.Interaction):
-
-                user = inter.user
-                form = data[self.values[0]]
-
-                await inter.response.send_message("📩 Revisa tu DM", ephemeral=True)
+                try:
+                    await interaction.user.send("📋 Inicio")
+                except:
+                    return await interaction.response.send_message("Activa DM", ephemeral=True)
 
                 respuestas = []
 
-                for pregunta in form["preguntas"]:
+                for p in preguntas:
+                    await interaction.user.send(p)
                     try:
-                        await user.send(f"❓ {pregunta}")
-
-                        def check(m):
-                            return m.author == user and isinstance(m.channel, discord.DMChannel)
-
-                        msg = await self.bot.wait_for("message", timeout=180, check=check)
+                        msg = await interaction.client.wait_for(
+                            "message",
+                            timeout=180,
+                            check=lambda m: m.author == interaction.user
+                        )
                         respuestas.append(msg.content)
+                    except:
+                        respuestas.append("No respondió")
 
-                    except asyncio.TimeoutError:
-                        respuestas.append("⏱️ Sin respuesta")
+                embed = discord.Embed(title="Formulario")
+                for p, r in zip(preguntas, respuestas):
+                    embed.add_field(name=p, value=r, inline=False)
 
-                embed = discord.Embed(
-                    title=f"📨 {form['titulo']}",
-                    description="\n".join(respuestas),
-                    color=discord.Color.blurple()
+                await interaction.channel.send(
+                    embed=embed,
+                    view=FormView(respuestas, interaction.user)
                 )
 
-                view = ReviewView(user, form, respuestas)
+                await interaction.response.send_message("Enviado", ephemeral=True)
 
-                await canal.send(embed=embed, view=view)
+        view = discord.ui.View()
+        view.add_item(Menu())
 
-        class View(discord.ui.View):
-            def __init__(self, bot):
-                super().__init__(timeout=None)
-                self.add_item(Select(bot))
-
-        embed = discord.Embed(title="📋 Formularios", description=descripcion)
-
-        await interaction.response.send_message("✅ Panel creado", ephemeral=True)
-        await canal.send(embed=embed, view=View(self.bot))
-
-class ReviewView(discord.ui.View):
-    def __init__(self, user, form, respuestas):
-        super().__init__(timeout=None)
-        self.user = user
-        self.form = form
-        self.respuestas = respuestas
-
-    @discord.ui.button(label="Aprobar", style=discord.ButtonStyle.success)
-    async def aprobar(self, interaction: discord.Interaction, button: discord.ui.Button):
-
-        embed = discord.Embed(
-            title="✅ Formulario Aprobado",
-            description=f"Aprobado por {interaction.user}",
-            color=discord.Color.green()
-        )
-
-        await self.user.send(embed=embed)
-        await interaction.message.delete()
-
-    @discord.ui.button(label="Rechazar", style=discord.ButtonStyle.danger)
-    async def rechazar(self, interaction: discord.Interaction, button: discord.ui.Button):
-
-        await interaction.response.send_message("✏️ Escribe la razón:", ephemeral=True)
-
-        def check(m): return m.author == interaction.user
-        msg = await interaction.client.wait_for("message", check=check)
-
-        embed = discord.Embed(
-            title="❌ Formulario Rechazado",
-            description=f"Rechazado por {interaction.user}\nRazón: {msg.content}",
-            color=discord.Color.red()
-        )
-
-        await self.user.send(embed=embed)
-        await interaction.message.delete()
-
+        await i.channel.send("📋 Panel formularios", view=view)
+        await i.response.send_message("Panel creado", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(Forms(bot))
