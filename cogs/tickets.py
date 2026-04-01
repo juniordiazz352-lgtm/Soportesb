@@ -116,35 +116,7 @@ body {{
         await interaction.response.send_message("Ticket cerrado", ephemeral=True)
         await channel.delete()
 
-    @discord.ui.button(label="Confirmar cierre", style=discord.ButtonStyle.red)
-    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        channel = interaction.channel
-        guild = interaction.guild
-
-        # 📄 TRANSCRIPT
-        messages = []
-        async for msg in channel.history(limit=None, oldest_first=True):
-            messages.append(f"{msg.author}: {msg.content}")
-
-        content = "\n".join(messages)
-
-        file = discord.File(
-            fp=bytes(content, "utf-8"),
-            filename=f"{channel.name}.txt"
-        )
-
-        # 📡 LOGS POR PANEL
-        log_id = get_ticket_log(str(guild.id), self.ticket_name)
-        if log_id:
-            log_channel = guild.get_channel(int(log_id))
-            if log_channel:
-                await log_channel.send(
-                    content=f"📁 Transcript {channel.name}",
-                    file=file
-                )
-
-        await interaction.response.send_message("Ticket cerrado", ephemeral=True)
-        await channel.delete()
+   
 
 # =========================
 # 🎫 BOTONES
