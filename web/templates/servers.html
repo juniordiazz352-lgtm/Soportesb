@@ -7,12 +7,17 @@
 
 {% for g in guilds %}
 
-<a href="/dashboard/{{ g.id }}"
-class="card p-6 rounded-2xl hover:scale-105 transition duration-300">
+<a href="/dashboard/{{ g.id }}" class="card p-6 rounded-2xl text-center">
 
 <img src="https://cdn.discordapp.com/icons/{{g.id}}/{{g.icon}}.png"
-class="w-16 h-16 rounded-full mb-3">
+class="w-16 h-16 mx-auto rounded-full mb-3">
 
-<p>{{ g.name }}</p>
+<p class="font-bold">{{ g.name }}</p>
 
 </a>
+
+{% endfor %}
+
+</div>
+
+{% endblock %}
