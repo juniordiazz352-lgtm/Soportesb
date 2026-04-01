@@ -1,108 +1,100 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+import json
+import config
 
-from utils.storage import load_data, save_data
-from utils.checks import is_owner
-from utils.transcript import create_transcript
+def load(file):
+    try:
+        with open(file) as f:
+            return json.load(f)
+    except:
+        return {}
 
-FILE = "data/tickets.json"
-STATS = "data/stats.json"
+def save(file, data):
+    with open(file, "w") as f:
+        json.dump(data, f, indent=4)
+
+class TicketView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Cerrar", style=discord.ButtonStyle.red)
+    async def cerrar(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.channel.delete()
 
 class Tickets(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    def is_owner(self, i):
+        return i.user.id == config.OWNER_ID
+
     @app_commands.command(name="agregar_rol_staff")
-    async def staff(self, interaction: discord.Interaction, rol: discord.Role):
-        if not is_owner(interaction.user):
-            return await interaction.response.send_message("❌ Solo dueño", ephemeral=True)
+    async def staff(self, i: discord.Interaction, rol: discord.Role):
+        if not self.is_owner(i):
+            return await i.response.send_message("❌ Solo owner", ephemeral=True)
 
-        data = load_data(FILE)
-        data["staff_roles"].append(rol.id)
-        save_data(FILE, data)
+        data = load("data/staff.json")
+        data[str(i.guild.id)] = rol.id
+        save("data/staff.json", data)
 
-        await interaction.response.send_message("✅ Staff agregado")
+        await i.response.send_message("✅ Staff agregado")
 
-    @apfrom database.db import add_ticket
+    @app_commands.command(name="crear_ticket")
+    async def crear(self, i: discord.Interaction, nombre: str, titulo: str, descripcion: str):
+        if not self.is_owner(i):
+            return await i.response.send_message("❌ Solo owner", ephemeral=True)
 
-@app_commands.command(name="crear_ticket")
-async def crear_ticket(self, interaction, nombre: str, titulo: str, descripcion: str, emoji: str):
+        data = load("data/tickets.json")
+        if str(i.guild.id) not in data:
+            data[str(i.guild.id)] = {}
 
-    add_ticket(
-        str(interaction.guild.id),
-        nombre,
-        titulo,
-        descripcion,
-        emoji
-    )
+        data[str(i.guild.id)][nombre] = {
+            "titulo": titulo,
+            "descripcion": descripcion
+        }
 
-    await interaction.response.send_message("✅ Ticket guardado en DB", ephemeral=True)
+        save("data/tickets.json", data)
+        await i.response.send_message("✅ Ticket creado")
 
     @app_commands.command(name="panel_ticket")
-    async def panel(self, interaction: discord.Interaction, canal: discord.TextChannel, categoria: discord.CategoryChannel, titulo: str, descripcion: str):
-
-        data = load_data(FILE)
+    async def panel(self, i: discord.Interaction):
+        data = load("data/tickets.json").get(str(i.guild.id), {})
 
         options = [
-            discord.SelectOption(
-                label=t["titulo"],
-                description=t["descripcion"][:100],
-                emoji=t["emoji"],
-                value=name
-            )
-            for name, t in data["tickets"].items()
+            discord.SelectOption(label=k, description=v["descripcion"])
+            for k, v in data.items()
         ]
 
-        class Select(discord.ui.Select):
+        class Menu(discord.ui.Select):
             def __init__(self):
                 super().__init__(placeholder="Selecciona ticket", options=options)
 
-            async def callback(self, inter: discord.Interaction):
-                guild = inter.guild
-                user = inter.user
-
+            async def callback(self, interaction: discord.Interaction):
+                guild = interaction.guild
                 overwrites = {
-                    guild.default_role: discord.PermissionOverwrite(view_channel=False),
-                    user: discord.PermissionOverwrite(view_channel=True)
+                    guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                    interaction.user: discord.PermissionOverwrite(read_messages=True)
                 }
 
-                for role_id in data["staff_roles"]:
-                    role = guild.get_role(role_id)
-                    if role:
-                        overwrites[role] = discord.PermissionOverwrite(view_channel=True)
-
                 channel = await guild.create_text_channel(
-                    name=f"ticket-{user.id}",
-                    category=categoria,
+                    name=f"ticket-{interaction.user.name}",
                     overwrites=overwrites
                 )
 
-                await channel.send(f"🎫 Ticket de {user.mention}", view=Buttons(user.id))
-                await inter.response.send_message("✅ Ticket creado", ephemeral=True)
+                await channel.send(
+                    f"{interaction.user.mention}",
+                    view=TicketView()
+                )
 
-        class View(discord.ui.View):
-            def __init__(self):
-                super().__init__(timeout=None)
-                self.add_item(Select())
+                await interaction.response.send_message(f"🎫 Ticket creado: {channel.mention}", ephemeral=True)
 
-        embed = discord.Embed(title=titulo, description=descripcion)
-        await canal.send(embed=embed, view=View())
+        view = discord.ui.View()
+        view.add_item(Menu())
 
-        await interaction.response.send_message("✅ Panel creado", ephemeral=True)
-
-
-class Buttons(discord.ui.View):
-    def __init__(self, owner_id):
-        super().__init__(timeout=None)
-        self.owner_id = owner_id
-
-    @discord.ui.button(label="Cerrar", style=discord.ButtonStyle.danger)
-    async def close(self, interaction: discord.Interaction, button):
-        file = await create_transcript(interaction.channel)
-        await interaction.channel.send(file=discord.File(file))
-        await interaction.channel.delete()
-
+        await i.channel.send("🎫 Panel de tickets", view=view)
+        await i.response.send_message("✅ Panel creado", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(Tickets(bot))
