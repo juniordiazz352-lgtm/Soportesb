@@ -8,31 +8,21 @@ cursor.execute("""
 CREATE TABLE IF NOT EXISTS tickets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     guild_id TEXT,
-    name TEXT,
-    title TEXT,
-    description TEXT,
-    emoji TEXT
-)
-""")
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    user_id TEXT,
-    guild_id TEXT
+    nombre TEXT,
+    titulo TEXT,
+    descripcion TEXT
 )
 """)
 
 conn.commit()
 
-
-def add_ticket(guild_id, name, title, description, emoji):
+def add_ticket(guild_id, nombre, titulo, descripcion):
     cursor.execute(
-        "INSERT INTO tickets (guild_id, name, title, description, emoji) VALUES (?, ?, ?, ?, ?)",
-        (guild_id, name, title, description, emoji)
+        "INSERT INTO tickets (guild_id, nombre, titulo, descripcion) VALUES (?, ?, ?, ?)",
+        (guild_id, nombre, titulo, descripcion)
     )
     conn.commit()
 
-
 def get_tickets(guild_id):
-    cursor.execute("SELECT * FROM tickets WHERE guild_id=?", (guild_id,))
+    cursor.execute("SELECT nombre, titulo, descripcion FROM tickets WHERE guild_id=?", (guild_id,))
     return cursor.fetchall()
