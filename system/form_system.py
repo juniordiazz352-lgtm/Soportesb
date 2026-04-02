@@ -4,9 +4,8 @@ from database.db import load, save
 FORMS_FILE = "database/forms.json"
 RESPONSES_FILE = "database/responses.json"
 
-
 # ========================
-# 📋 GESTIÓN DE FORMULARIOS
+# 📋 FORMULARIOS
 # ========================
 
 def get_forms(guild_id):
@@ -28,13 +27,15 @@ def save_form(guild_id, name, preguntas, canal_id):
 
 def delete_form(guild_id, name):
     data = load(FORMS_FILE)
+
     if str(guild_id) in data and name in data[str(guild_id)]:
         del data[str(guild_id)][name]
-        save(FORMS_FILE, data)
+
+    save(FORMS_FILE, data)
 
 
 # ========================
-# 📨 GUARDAR RESPUESTAS
+# 📨 RESPUESTAS
 # ========================
 
 def save_response(user_id, form_name, respuestas):
@@ -57,7 +58,7 @@ def save_response(user_id, form_name, respuestas):
 
 class DynamicForm(discord.ui.Modal):
     def __init__(self, form_name, preguntas, canal_id):
-        super().__init__(title=f"{form_name}")
+        super().__init__(title=form_name)
         self.form_name = form_name
         self.canal_id = canal_id
         self.inputs = []
@@ -86,11 +87,11 @@ class DynamicForm(discord.ui.Modal):
 
         await canal.send(embed=embed, view=ReviewView(interaction.user))
 
-        await interaction.response.send_message("✅ Enviado correctamente", ephemeral=True)
+        await interaction.response.send_message("✅ Formulario enviado", ephemeral=True)
 
 
 # ========================
-# 👮 APROBACIÓN STAFF
+# 👮 REVIEW STAFF
 # ========================
 
 class ReviewView(discord.ui.View):
