@@ -1,7 +1,7 @@
 import discord
 from database.db import load, save
-from utils.embeds import ticket_embed
-from views.ticket_controls import TicketControls
+from util.embeds import ticket_embed
+from view.ticket_controls import TicketControls
 
 TICKETS_FILE = "database/tickets.json"
 GUILDS_FILE = "database/guilds.json"
