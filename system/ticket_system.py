@@ -4,9 +4,16 @@ from utils.embeds import ticket_embed
 from view.ticket_controls import TicketControls
 from util.embeds import ticket_embed
 
+from view.ticket_controls import TicketControls
+from utils.embeds import ticket_embed
+
 embed = ticket_embed(user, tipo, ticket_number)
 
-await channel.send(embed=embed)
+await channel.send(
+    content=user.mention,
+    embed=embed,
+    view=TicketControls(user.id)
+)
 
 TICKETS_FILE = "database/tickets.json"
 GUILDS_FILE = "database/guilds.json"
