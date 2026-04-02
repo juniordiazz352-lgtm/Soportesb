@@ -14,11 +14,12 @@ async def on_ready():
 
     bot.add_view(PanelView())
     bot.add_view(TicketControls(user_id=0))
-
+    
     await bot.tree.sync()
 
 async def main():
     async with bot:
+        await bot.load_extension("commands.forms")
         await bot.load_extension("commands.setup")
         await bot.start(TOKEN)
 
