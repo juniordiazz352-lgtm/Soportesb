@@ -138,3 +138,26 @@ class Forms(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Forms(bot))
+
+class ReviewView(discord.ui.View):
+    def __init__(self, user):
+        super().__init__(timeout=None)
+        self.user = user
+
+    @discord.ui.button(label="✅ Aprobar", style=discord.ButtonStyle.green)
+    async def aprobar(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        await self.user.send("✅ Tu formulario fue aprobado")
+        await interaction.response.send_message("Aprobado")
+
+    @discord.ui.button(label="❌ Rechazar", style=discord.ButtonStyle.red)
+    async def rechazar(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        await interaction.response.send_message("Escribe la razón")
+
+        msg = await interaction.client.wait_for(
+            "message",
+            check=lambda m: m.author == interaction.user
+        )
+
+        await self.user.send(f"❌ Rechazado\nRazón: {msg.content}")
