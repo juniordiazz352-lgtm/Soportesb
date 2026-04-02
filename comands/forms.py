@@ -18,7 +18,7 @@ class Forms(commands.Cog):
     @app_commands.command(name="eliminar_formulario")
     async def eliminar_formulario(self, interaction, nombre: str):
         delete_form(interaction.guild.id, nombre)
-        await interaction.response.send_message("🗑 Eliminado", ephemeral=True)
+        await interaction.response.send_message("🗑 Formulario eliminado", ephemeral=True)
 
     @app_commands.command(name="panel_forms")
     async def panel_forms(self, interaction):
@@ -32,6 +32,7 @@ class Forms(commands.Cog):
 
         await interaction.channel.send(embed=embed, view=view)
         await interaction.response.send_message("✅ Panel creado", ephemeral=True)
+
 
 async def setup(bot):
     await bot.add_cog(Forms(bot))
