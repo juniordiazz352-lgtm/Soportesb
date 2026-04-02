@@ -1,4 +1,0 @@
-CLIENT_ID = 1485387890786697380
-CLIENT_SECRET = -Ldu4lmTw1ueJN3nWi8j_4-Zy09OOZyO
-REDIRECT_URI = "http://127.0.0.1:5000/callback"
-API_BASE = "https://discord.com/api"
