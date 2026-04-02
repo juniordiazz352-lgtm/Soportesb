@@ -1,37 +1,27 @@
 import discord
 from discord.ext import commands
 import asyncio
-import config
+from config import TOKEN, GUILD_ID
+from views.panel_view import PanelView
+from views.ticket_controls import TicketControls
 
-import threading
-from flask import Flask
-import os
-
-# 🌐 Render fix
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return "Bot activo"
-
-def run():
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-
-threading.Thread(target=run).start()
-
-# 🤖 Bot
 intents = discord.Intents.all()
+
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f"🔥 {bot.user} listo")
-    await bot.tree.sync()
+    print(f"✅ Conectado como {bot.user}")
+
+    # Persistencia de botones
+    bot.add_view(PanelView())
+    bot.add_view(TicketControls(user_id=0))
+
+    await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
 
 async def main():
     async with bot:
-        await bot.load_extension("cogs.tickets")
-        await bot.load_extension("cogs.forms")
-        await bot.start(config.TOKEN)
+        await bot.load_extension("commands.setup")
+        await bot.start(TOKEN)
 
 asyncio.run(main())
