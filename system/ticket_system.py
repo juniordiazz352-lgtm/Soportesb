@@ -68,6 +68,9 @@ channel = await guild.create_text_channel(
 
 save_ticket(user.id, guild.id, channel.id, tipo)
 
-await channel.send(embed=ticket_embed(user, tipo, ticket_number), ...)
+await channel.send(
+    embed=ticket_embed(user, tipo, ticket_number),
+    view=TicketControls(user.id)
+)
 
 await interaction.response.send_message(f"✅ Ticket: {channel.mention}", ephemeral=True)
