@@ -7,9 +7,9 @@ def panel_embed():
         color=discord.Color.blurple()
     )
 
-def ticket_embed(user, tipo):
+def ticket_embed(user, tipo, ticket_id):
     return discord.Embed(
-        title=f"🎫 Ticket - {tipo}",
-        description=f"{user.mention} ha abierto un ticket.\nUn staff te atenderá pronto.",
+        title=f"🎫 Ticket #{ticket_id}",
+        description=f"{user.mention} abrió un ticket de tipo **{tipo}**.",
         color=discord.Color.green()
     )
