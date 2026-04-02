@@ -2,6 +2,11 @@ import discord
 from database.db import load, save
 from utils.embeds import ticket_embed
 from view.ticket_controls import TicketControls
+from util.embeds import ticket_embed
+
+embed = ticket_embed(user, tipo, ticket_number)
+
+await channel.send(embed=embed)
 
 TICKETS_FILE = "database/tickets.json"
 GUILDS_FILE = "database/guilds.json"
