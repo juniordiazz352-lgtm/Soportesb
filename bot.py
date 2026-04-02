@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import comands
 import asyncio
 from config import TOKEN
 from view.panel_view import PanelView
