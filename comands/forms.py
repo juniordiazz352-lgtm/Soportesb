@@ -1,8 +1,8 @@
-from discord.ext import commands
+from discord.ext import comands
 from discord import app_commands
 import discord
-from systems.form_system import save_form, delete_form
-from views.form_views import FormPanel
+from system.form_system import save_form, delete_form
+from view.form_views import FormPanel
 
 class Forms(commands.Cog):
     def __init__(self, bot):
