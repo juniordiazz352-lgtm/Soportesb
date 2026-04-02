@@ -66,8 +66,8 @@ channel = await guild.create_text_channel(
     overwrites=overwrites
 )
 
-    save_ticket(user.id, guild.id, channel.id, tipo)
+save_ticket(user.id, guild.id, channel.id, tipo)
 
-    await channel.send(embed=ticket_embed(user, tipo, ticket_number), ...)
+await channel.send(embed=ticket_embed(user, tipo, ticket_number), ...)
 
-    await interaction.response.send_message(f"✅ Ticket: {channel.mention}", ephemeral=True)
+await interaction.response.send_message(f"✅ Ticket: {channel.mention}", ephemeral=True)
