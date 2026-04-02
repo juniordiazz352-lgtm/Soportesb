@@ -1,6 +1,6 @@
 import discord
 from discord.ui import View, Select
-from systems.form_builder import get_forms, DynamicForm
+from system.form_builder import get_forms, DynamicForm
 
 class FormPanel(View):
     def __init__(self, guild_id):
