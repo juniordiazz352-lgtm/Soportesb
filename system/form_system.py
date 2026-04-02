@@ -128,6 +128,17 @@ class RejectModal(discord.ui.Modal, title="Motivo del rechazo"):
         super().__init__()
         self.user = user
         self.message = message
+        
+from database.db import load, save
+RESPONSES_FILE = "database/responses.json"
+
+data = load(RESPONSES_FILE)
+
+user_data = data.get(str(self.user.id), [])
+if user_data:
+    user_data[-1]["estado"] = "rechazado"
+
+save(RESPONSES_FILE, data)
 
     async def on_submit(self, interaction):
         await self.user.send(f"❌ Rechazado\nMotivo: {self.motivo.value}")
