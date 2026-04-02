@@ -102,6 +102,16 @@ class ReviewView(discord.ui.View):
 
     @discord.ui.button(label="Aprobar", style=discord.ButtonStyle.success)
     async def approve(self, interaction, button):
+        from database.db import load, save
+RESPONSES_FILE = "database/responses.json"
+
+data = load(RESPONSES_FILE)
+
+user_data = data.get(str(self.user.id), [])
+if user_data:
+    user_data[-1]["estado"] = "aprobado"
+
+save(RESPONSES_FILE, data)
         await self.user.send("✅ Tu formulario fue aprobado")
         await interaction.message.edit(view=None)
         await interaction.response.send_message("Aprobado", ephemeral=True)
