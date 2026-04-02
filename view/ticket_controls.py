@@ -1,8 +1,10 @@
 import discord
 from discord.ui import View
-from systems.transcript import generate_transcript
 from systems.ticket_system import remove_ticket
-from config import STAFF_ROLE_ID
+from systems.transcript import generate_transcript
+from database.db import load
+
+GUILDS_FILE = "database/guilds.json"
 
 class TicketControls(View):
     def __init__(self, user_id):
