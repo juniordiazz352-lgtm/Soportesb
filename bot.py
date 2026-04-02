@@ -7,6 +7,17 @@ from view.ticket_controls import TicketControls
 from view.form_dynamic_panel import FormPanel
 import sys
 import os
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+TOKEN = os.getenv("TOKEN")
+
+if not TOKEN:
+    raise Exception("❌ TOKEN no encontrado")
+
+bot.run(TOKEN)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
