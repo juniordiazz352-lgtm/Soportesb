@@ -1,6 +1,6 @@
 import discord
 from discord.ui import View, Select
-from systems.ticket_system import create_ticket
+from system.ticket_system import create_ticket
 
 class PanelView(View):
     def __init__(self):
