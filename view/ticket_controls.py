@@ -1,6 +1,6 @@
 import discord
-import asyncio
 from discord.ui import View, button
+import asyncio
 
 class TicketControls(View):
     def __init__(self, owner_id):
@@ -8,63 +8,37 @@ class TicketControls(View):
         self.owner_id = owner_id
         self.claimed_by = None
 
-    # 🔒 CERRAR TICKET
-    @button(label="Cerrar", style=discord.ButtonStyle.danger, emoji="🔒")
-    async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(
-            "🔒 Cerrando ticket...",
-            ephemeral=True
-        )
+    @button(label="🔒 Cerrar", style=discord.ButtonStyle.danger)
+    async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not interaction.user.guild_permissions.manage_channels:
+            return await interaction.response.send_message("❌ Sin permisos", ephemeral=True)
 
-        await interaction.channel.send("🔒 El ticket será cerrado en 5 segundos...")
-        await asyncio.sleep(5)(discord.utils.utcnow() + discord.timedelta(seconds=5))
-
+        await interaction.response.send_message("🔒 Cerrando ticket...", ephemeral=True)
+        await asyncio.sleep(3)
         await interaction.channel.delete()
 
-    # 👨‍💼 RECLAMAR TICKET
-    @button(label="Reclamar", style=discord.ButtonStyle.primary, emoji="👨‍💼")
-    async def claim_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @button(label="👨‍💼 Reclamar", style=discord.ButtonStyle.primary)
+    async def claim(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.claimed_by:
-            return await interaction.response.send_message(
-                f"⚠️ Ya fue reclamado por <@{self.claimed_by}>",
-                ephemeral=True
-            )
+            return await interaction.response.send_message("⚠️ Ya fue reclamado", ephemeral=True)
 
         self.claimed_by = interaction.user.id
+        await interaction.response.send_message(f"👨‍💼 {interaction.user.mention} tomó el ticket")
 
-        await interaction.response.send_message(
-            f"✅ Ticket reclamado por {interaction.user.mention}",
-            ephemeral=False
-        )
-
-        await interaction.channel.send(
-            f"👨‍💼 {interaction.user.mention} ahora está atendiendo este ticket."
-        )
-
-    # 🗑️ ELIMINAR TICKET
-    @button(label="Eliminar", style=discord.ButtonStyle.secondary, emoji="🗑️")
-    async def delete_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(
-            "🗑️ Eliminando ticket...",
-            ephemeral=True
-        )
+    @button(label="🗑️ Eliminar", style=discord.ButtonStyle.secondary)
+    async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not interaction.user.guild_permissions.manage_channels:
+            return await interaction.response.send_message("❌ Sin permisos", ephemeral=True)
 
         await interaction.channel.delete()
 
-    # 📄 TRANSCRIPCIÓN SIMPLE
-    @button(label="Transcripción", style=discord.ButtonStyle.success, emoji="📄")
+    @button(label="📄 Transcripción", style=discord.ButtonStyle.success)
     async def transcript(self, interaction: discord.Interaction, button: discord.ui.Button):
         messages = []
         async for msg in interaction.channel.history(limit=100):
             messages.append(f"{msg.author}: {msg.content}")
 
-        transcript_text = "\n".join(reversed(messages))
+        text = "\n".join(reversed(messages))[:1900]
 
-        await interaction.user.send(
-            f"📄 Transcripción del ticket:\n```{transcript_text[:1900]}```"
-        )
-
-        await interaction.response.send_message(
-            "📄 Transcripción enviada por DM",
-            ephemeral=True
-        )
+        await interaction.user.send(f"```{text}```")
+        await interaction.response.send_message("📄 Enviado por DM", ephemeral=True)
