@@ -33,6 +33,37 @@ class Forms(commands.Cog):
         await interaction.channel.send(embed=embed, view=view)
         await interaction.response.send_message("✅ Panel creado", ephemeral=True)
 
+@app_commands.command(name="historial")
+async def historial(self, interaction, usuario: discord.User):
+    from database.db import load
+
+    data = load("database/responses.json")
+
+    user_data = data.get(str(usuario.id))
+
+    if not user_data:
+        return await interaction.response.send_message("❌ Sin historial", ephemeral=True)
+
+    embed = discord.Embed(
+        title=f"📜 Historial de {usuario}",
+        color=discord.Color.blurple()
+    )
+
+    for i, app in enumerate(user_data[-5:], 1):
+        estado = app.get("estado", "pendiente")
+
+        respuestas = "\n".join(
+            [f"**{k}:** {v}" for k, v in app["respuestas"].items()]
+        )
+
+        embed.add_field(
+            name=f"{i}. {app['form']} ({estado})",
+            value=respuestas,
+            inline=False
+        )
+
+    await interaction.response.send_message(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(Forms(bot))
