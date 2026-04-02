@@ -108,3 +108,48 @@ def log_embed(title, description, user):
     embed.timestamp = datetime.utcnow()
 
     return embed
+
+import discord
+from datetime import datetime
+
+def panel_embed(title, description):
+    embed = discord.Embed(
+        title=title,
+        description=description,
+        color=discord.Color.blurple()
+    )
+    embed.set_footer(text="Sistema de tickets")
+    return embed
+
+
+def ticket_embed(user, tipo, ticket_number):
+    embed = discord.Embed(
+        title=f"🎫 Ticket #{ticket_number:04d}",
+        description=(
+            f"👤 Usuario: {user.mention}\n"
+            f"📂 Tipo: {tipo}\n"
+            f"🕒 <t:{int(datetime.utcnow().timestamp())}:F>"
+        ),
+        color=discord.Color.green()
+    )
+
+    embed.set_thumbnail(url=user.display_avatar.url)
+
+    embed.add_field(name="Estado", value="🟢 Abierto", inline=True)
+    embed.add_field(name="Soporte", value="⏳ Esperando staff", inline=True)
+
+    return embed
+
+
+def log_embed(user, tipo, channel):
+    embed = discord.Embed(
+        title="📩 Nuevo Ticket",
+        description=f"{user.mention} creó un ticket",
+        color=discord.Color.gold()
+    )
+
+    embed.add_field(name="Tipo", value=tipo)
+    embed.add_field(name="Canal", value=channel.mention)
+    embed.timestamp = datetime.utcnow()
+
+    return embed
