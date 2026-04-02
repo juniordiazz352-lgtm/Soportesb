@@ -4,16 +4,6 @@ from utils.embeds import ticket_embed
 from view.ticket_controls import TicketControls
 from util.embeds import ticket_embed
 
-from view.ticket_controls import TicketControls
-from utils.embeds import ticket_embed
-
-embed = ticket_embed(user, tipo, ticket_number)
-
-await channel.send(
-    content=user.mention,
-    embed=embed,
-    view=TicketControls(user.id)
-)
 
 TICKETS_FILE = "database/tickets.json"
 GUILDS_FILE = "database/guilds.json"
@@ -74,6 +64,10 @@ ticket_number = get_next_ticket_number(tipo.lower())
 
 import discord
 
+import discord
+from util.embeds import ticket_embed
+from view.ticket_controls import TicketControls
+
 async def create_ticket(guild, user, tipo):
     category = discord.utils.get(guild.categories, name="Tickets")
 
@@ -81,6 +75,20 @@ async def create_ticket(guild, user, tipo):
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
         user: discord.PermissionOverwrite(read_messages=True)
     }
+
+    channel = await guild.create_text_channel(
+        name=f"{tipo}-{user.name}",
+        category=category,
+        overwrites=overwrites
+    )
+
+    embed = ticket_embed(user, tipo, 1)
+
+    await channel.send(
+        content=user.mention,
+        embed=embed,
+        view=TicketControls(user.id)
+    )
 
     channel = await guild.create_text_channel(
         name=f"{tipo}-{user.name}",
