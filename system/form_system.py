@@ -83,6 +83,7 @@ embed = discord.Embed(
     color=discord.Color.orange(),
     timestamp=datetime.utcnow()
 )
+embed.set_thumbnail(url=interaction.user.display_avatar.url)
 
 embed.add_field(name="👤 Usuario", value=interaction.user.mention, inline=True)
 embed.add_field(name="📄 Formulario", value=self.form_name, inline=True)
