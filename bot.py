@@ -8,7 +8,8 @@ from views.form_dynamic_panel import FormPanel
 import sys
 import os
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, BASE_DIR)
 bot.add_view(FormPanel(guild_id=0))
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
