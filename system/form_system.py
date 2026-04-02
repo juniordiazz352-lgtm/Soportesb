@@ -78,12 +78,56 @@ class DynamicForm(discord.ui.Modal):
 
        from datetime import datetime
 
+from datetime import datetime
+
 embed = discord.Embed(
     title="📋 Nueva Aplicación",
+    description="Se ha recibido una nueva aplicación",
     color=discord.Color.orange(),
     timestamp=datetime.utcnow()
 )
+
+embed.set_author(
+    name=f"{interaction.user} | Aplicación",
+    icon_url=interaction.user.display_avatar.url
+)
+
 embed.set_thumbnail(url=interaction.user.display_avatar.url)
+
+embed.add_field(
+    name="👤 Usuario",
+    value=f"{interaction.user.mention}\n`{interaction.user.id}`",
+    inline=True
+)
+
+embed.add_field(
+    name="📄 Formulario",
+    value=f"`{self.form_name}`",
+    inline=True
+)
+
+embed.add_field(
+    name="📊 Estado",
+    value="🟡 Pendiente",
+    inline=False
+)
+
+embed.add_field(
+    name="━━━━━━━━━━━━━━━━━━━━━━",
+    value="🧠 **Respuestas del usuario:**",
+    inline=False
+)
+
+for k, v in respuestas.items():
+    embed.add_field(
+        name=f"➤ {k}",
+        value=f"```{v[:1000]}```",
+        inline=False
+    )
+
+embed.set_footer(
+    text=f"Sistema de Formularios • ID: {interaction.user.id}"
+)
 
 embed.add_field(name="👤 Usuario", value=interaction.user.mention, inline=True)
 embed.add_field(name="📄 Formulario", value=self.form_name, inline=True)
