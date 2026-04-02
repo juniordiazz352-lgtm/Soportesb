@@ -60,17 +60,18 @@ async def create_ticket(interaction, tipo):
 
 ticket_number = get_next_ticket_number(tipo.lower())
 
-channel = await guild.create_text_channel(
-    name=f"{tipo.lower()}-{ticket_number}",
-    category=category,
-    overwrites=overwrites
-)
+async def create_ticket(guild, user, tipo):
+    category = discord.utils.get(guild.categories, name="Tickets")
 
-save_ticket(user.id, guild.id, channel.id, tipo)
+    overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        user: discord.PermissionOverwrite(read_messages=True)
+    }
 
-await channel.send(
-    embed=ticket_embed(user, tipo, ticket_number),
-    view=TicketControls(user.id)
-)
+    channel = await guild.create_text_channel(
+        name=f"{tipo}-{user.name}",
+        category=category,
+        overwrites=overwrites
+    )
 
-await interaction.response.send_message(f"✅ Ticket: {channel.mention}", ephemeral=True)
+    await channel.send(f"{user.mention} ticket creado")
