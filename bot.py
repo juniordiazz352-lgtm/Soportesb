@@ -32,8 +32,8 @@ async def on_ready():
 
 async def main():
     async with bot:
-        await bot.load_extension("commands.forms")
-        await bot.load_extension("commands.setup")
+        await bot.load_extension("comands.forms")
+        await bot.load_extension("comands.setup")
         await bot.start(TOKEN)
 
 asyncio.run(main())
