@@ -1,99 +1,69 @@
 import discord
-from database.db import load, save
-from utils.embeds import ticket_embed
+import json
+import os
+from utils.embeds import ticket_embed, log_embed
 from view.ticket_controls import TicketControls
-from util.embeds import ticket_embed
 
+DB_PATH = "src/database/counter.json"
 
-TICKETS_FILE = "database/tickets.json"
-GUILDS_FILE = "database/guilds.json"
-COUNTER_FILE = "database/counter.json"
+def get_ticket_number(guild_id):
+    if not os.path.exists(DB_PATH):
+        with open(DB_PATH, "w") as f:
+            json.dump({}, f)
 
-COUNTER_FILE = "database/counter.json"
+    with open(DB_PATH, "r") as f:
+        data = json.load(f)
 
-def get_next_ticket_number(tipo):
-    data = load(COUNTER_FILE)
+    guild_id = str(guild_id)
 
-    if tipo not in data:
-        data[tipo] = 0
+    if guild_id not in data:
+        data[guild_id] = 0
 
-    data[tipo] += 1
-    save(COUNTER_FILE, data)
+    data[guild_id] += 1
 
-    return str(data[tipo]).zfill(4)
+    with open(DB_PATH, "w") as f:
+        json.dump(data, f, indent=4)
 
-  
+    return data[guild_id]
 
-def save_ticket(user_id, guild_id, channel_id, tipo):
-    data = load(TICKETS_FILE)
-    data[str(user_id)] = {
-        "guild": guild_id,
-        "channel": channel_id,
-        "tipo": tipo
-    }
-    save(TICKETS_FILE, data)
-
-def has_ticket(user_id):
-    return str(user_id) in load(TICKETS_FILE)
-
-def remove_ticket(user_id):
-    data = load(TICKETS_FILE)
-    data.pop(str(user_id), None)
-    save(TICKETS_FILE, data)
-
-async def create_ticket(interaction, tipo):
-    guild = interaction.guild
-    user = interaction.user
-
-    if has_ticket(user.id):
-        return await interaction.response.send_message("❌ Ya tienes ticket.", ephemeral=True)
-
-    config = get_guild_config(guild.id)
-    if not config:
-        return await interaction.response.send_message("❌ Servidor no configurado.", ephemeral=True)
-
-    overwrites = {
-        guild.default_role: discord.PermissionOverwrite(read_messages=False),
-        user: discord.PermissionOverwrite(read_messages=True),
-        guild.get_role(config["staff_role"]): discord.PermissionOverwrite(read_messages=True)
-    }
-
-    category = guild.get_channel(config["category"])
-
-ticket_number = get_next_ticket_number(tipo.lower())
-
-import discord
-
-import discord
-from util.embeds import ticket_embed
-from view.ticket_controls import TicketControls
 
 async def create_ticket(guild, user, tipo):
-    category = discord.utils.get(guild.categories, name="Tickets")
+    try:
+        # 📁 CREAR / OBTENER CATEGORÍA
+        category = discord.utils.get(guild.categories, name="Tickets")
+        if not category:
+            category = await guild.create_category("Tickets")
 
-    overwrites = {
-        guild.default_role: discord.PermissionOverwrite(read_messages=False),
-        user: discord.PermissionOverwrite(read_messages=True)
-    }
+        ticket_number = get_ticket_number(guild.id)
 
-    channel = await guild.create_text_channel(
-        name=f"{tipo}-{user.name}",
-        category=category,
-        overwrites=overwrites
-    )
+        # 🔒 PERMISOS
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            user: discord.PermissionOverwrite(read_messages=True),
+            guild.me: discord.PermissionOverwrite(read_messages=True)
+        }
 
-    embed = ticket_embed(user, tipo, 1)
+        channel = await guild.create_text_channel(
+            name=f"{tipo}-{ticket_number:04d}",
+            category=category,
+            overwrites=overwrites
+        )
 
-    await channel.send(
-        content=user.mention,
-        embed=embed,
-        view=TicketControls(user.id)
-    )
+        embed = ticket_embed(user, tipo, ticket_number)
 
-    channel = await guild.create_text_channel(
-        name=f"{tipo}-{user.name}",
-        category=category,
-        overwrites=overwrites
-    )
+        await channel.send(
+            content=user.mention,
+            embed=embed,
+            view=TicketControls(user.id)
+        )
 
-    await channel.send(f"{user.mention} ✅ ticket creado")
+        # 📊 LOGS
+        log_channel = discord.utils.get(guild.text_channels, name="ticket-logs")
+
+        if not log_channel:
+            log_channel = await guild.create_text_channel("ticket-logs")
+
+        await log_channel.send(embed=log_embed(user, tipo, channel))
+
+    except Exception as e:
+        print("❌ ERROR CREANDO TICKET:", e)
