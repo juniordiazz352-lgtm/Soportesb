@@ -76,10 +76,29 @@ class DynamicForm(discord.ui.Modal):
 
         save_response(interaction.user.id, self.form_name, respuestas)
 
-        embed = discord.Embed(
-            title=f"📋 {self.form_name}",
-            color=discord.Color.orange()
-        )
+       from datetime import datetime
+
+embed = discord.Embed(
+    title="📋 Nueva Aplicación",
+    color=discord.Color.orange(),
+    timestamp=datetime.utcnow()
+)
+
+embed.add_field(name="👤 Usuario", value=interaction.user.mention, inline=True)
+embed.add_field(name="📄 Formulario", value=self.form_name, inline=True)
+embed.add_field(name="📊 Estado", value="🟡 Pendiente", inline=False)
+
+respuestas_texto = "\n".join(
+    [f"**{k}:** {v}" for k, v in respuestas.items()]
+)
+
+embed.add_field(
+    name="🧠 Respuestas",
+    value=respuestas_texto[:1024],
+    inline=False
+)
+
+embed.set_footer(text=f"ID Usuario: {interaction.user.id}")
 
         for k, v in respuestas.items():
             embed.add_field(name=k, value=v, inline=False)
