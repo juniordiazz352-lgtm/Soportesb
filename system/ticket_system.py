@@ -60,6 +60,8 @@ async def create_ticket(interaction, tipo):
 
 ticket_number = get_next_ticket_number(tipo.lower())
 
+import discord
+
 async def create_ticket(guild, user, tipo):
     category = discord.utils.get(guild.categories, name="Tickets")
 
@@ -74,4 +76,4 @@ async def create_ticket(guild, user, tipo):
         overwrites=overwrites
     )
 
-await channel.send(f"{user.mention} ✅ ticket creado")
+    await channel.send(f"{user.mention} ✅ ticket creado")
