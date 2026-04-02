@@ -41,6 +41,10 @@ async def on_ready():
     
     await bot.tree.sync()
 
+@bot.event
+async def on_command_error(ctx, error):
+    print("ERROR:", error)
+
 async def main():
     async with bot:
         await bot.load_extension("comands.forms")
