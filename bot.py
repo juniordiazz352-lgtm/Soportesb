@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 import asyncio
-
 from config import TOKEN
 from views.panel_view import PanelView
 from views.ticket_controls import TicketControls
@@ -10,7 +9,6 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 bot.add_view(FormPanel(guild_id=0))
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
