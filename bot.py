@@ -2,9 +2,9 @@ import discord
 from discord.ext import commands
 import asyncio
 from config import TOKEN
-from views.panel_view import PanelView
-from views.ticket_controls import TicketControls
-from views.form_dynamic_panel import FormPanel
+from view.panel_view import PanelView
+from view.ticket_controls import TicketControls
+from view.form_dynamic_panel import FormPanel
 import sys
 import os
 
