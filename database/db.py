@@ -63,3 +63,19 @@ def get_ticket_log(guild_id, nombre):
     )
     r = cursor.fetchone()
     return r[0] if r else None
+
+# STAFF ROLES
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS staff_roles (
+    guild_id TEXT,
+    role_id TEXT
+)
+""")
+
+def add_staff_role(guild_id, role_id):
+    cursor.execute("INSERT INTO staff_roles VALUES (?, ?)", (guild_id, role_id))
+    conn.commit()
+
+def get_staff_roles(guild_id):
+    cursor.execute("SELECT role_id FROM staff_roles WHERE guild_id=?", (guild_id,))
+    return [r[0] for r in cursor.fetchall()]
