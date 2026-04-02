@@ -208,5 +208,47 @@ class Tickets(commands.Cog):
         await i.response.send_message("✅ Panel enviado", ephemeral=True)
 
 
+class TicketView(discord.ui.View):
+    def __init__(self, ticket_name):
+        super().__init__(timeout=None)
+        self.ticket_name = ticket_name
+        self.claimed = None
+
+    @discord.ui.button(label="📌 Reclamar", style=discord.ButtonStyle.blurple)
+    async def claim(self, interaction: discord.Interaction, button: discord.ui.Button):
+        from database.db import get_staff_roles
+
+        if not is_staff(interaction.user, interaction.guild):
+            return await interaction.response.send_message("❌ No eres staff", ephemeral=True)
+
+        self.claimed = interaction.user
+
+        await interaction.channel.send(f"📌 Ticket reclamado por {interaction.user.mention}")
+        await interaction.response.defer()
+
+    @discord.ui.button(label="➕ Añadir", style=discord.ButtonStyle.gray)
+    async def add(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        if not is_staff(interaction.user, interaction.guild):
+            return await interaction.response.send_message("❌ No staff", ephemeral=True)
+
+        await interaction.response.send_message("Menciona usuario o rol")
+
+        msg = await interaction.client.wait_for(
+            "message",
+            check=lambda m: m.author == interaction.user
+        )
+
+        for user in msg.mentions:
+            await interaction.channel.set_permissions(user, read_messages=True)
+
+        for role in msg.role_mentions:
+            await interaction.channel.set_permissions(role, read_messages=True)
+
+        await interaction.channel.send("✅ Añadido")
+
+        
+
+
 async def setup(bot):
     await bot.add_cog(Tickets(bot))
