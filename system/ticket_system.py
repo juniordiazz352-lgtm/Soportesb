@@ -47,11 +47,13 @@ async def create_ticket(interaction, tipo):
 
     category = guild.get_channel(config["category"])
 
-    channel = await guild.create_text_channel(
-        name=f"{tipo}-{user.name}",
-        category=category,
-        overwrites=overwrites
-    )
+   ticket_number = get_next_ticket_number()
+
+channel = await guild.create_text_channel(
+    name=f"ticket-{ticket_number}",
+    category=category,
+    overwrites=overwrites
+)
 
     save_ticket(user.id, guild.id, channel.id, tipo)
 
