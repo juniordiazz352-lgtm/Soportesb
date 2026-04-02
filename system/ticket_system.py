@@ -5,6 +5,7 @@ from views.ticket_controls import TicketControls
 
 TICKETS_FILE = "database/tickets.json"
 GUILDS_FILE = "database/guilds.json"
+COUNTER_FILE = "database/counter.json"
 
 def get_guild_config(guild_id):
     data = load(GUILDS_FILE)
