@@ -4,7 +4,9 @@ import asyncio
 from config import TOKEN
 from views.panel_view import PanelView
 from views.ticket_controls import TicketControls
+from views.form_dynamic_panel import FormPanel
 
+bot.add_view(FormPanel(guild_id=0))
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
