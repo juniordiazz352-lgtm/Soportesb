@@ -9,6 +9,13 @@ import sys
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 👇 FORZAR RUTA CORRECTA
+sys.path.insert(0, BASE_DIR)
+sys.path.insert(0, os.path.join(BASE_DIR))
+
+print("📂 PATH DEBUG:", sys.path)
+print("📂 ARCHIVOS:", os.listdir(BASE_DIR))
 sys.path.insert(0, BASE_DIR)
 bot.add_view(FormPanel(guild_id=0))
 intents = discord.Intents.all()
