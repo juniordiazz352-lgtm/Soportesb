@@ -58,10 +58,10 @@ async def create_ticket(interaction, tipo):
 
     category = guild.get_channel(config["category"])
 
-   ticket_number = get_next_ticket_number()
+ticket_number = get_next_ticket_number(tipo.lower())
 
 channel = await guild.create_text_channel(
-    name=f"ticket-{ticket_number}",
+    name=f"{tipo.lower()}-{ticket_number}",
     category=category,
     overwrites=overwrites
 )
