@@ -18,10 +18,11 @@ def save_form(guild_id, name, preguntas, canal_id):
     if str(guild_id) not in data:
         data[str(guild_id)] = {}
 
-    data[str(guild_id)][name] = {
-        "preguntas": preguntas,
-        "canal": canal_id
-    }
+   data[str(user_id)].append({
+    "form": form_name,
+    "respuestas": respuestas,
+    "estado": "pendiente"
+})
 
     save(FORMS_FILE, data)
 
