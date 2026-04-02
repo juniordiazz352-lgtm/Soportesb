@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord import app_commands
 import discord
-from views.panel_view import PanelView
+from view.panel_view import PanelView
 from utils.embeds import panel_embed
 
 class Setup(commands.Cog):
