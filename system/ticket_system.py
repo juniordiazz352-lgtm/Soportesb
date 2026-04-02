@@ -7,20 +7,20 @@ TICKETS_FILE = "database/tickets.json"
 GUILDS_FILE = "database/guilds.json"
 COUNTER_FILE = "database/counter.json"
 
-def get_next_ticket_number():
+COUNTER_FILE = "database/counter.json"
+
+def get_next_ticket_number(tipo):
     data = load(COUNTER_FILE)
 
-    if "count" not in data:
-        data["count"] = 0
+    if tipo not in data:
+        data[tipo] = 0
 
-    data["count"] += 1
+    data[tipo] += 1
     save(COUNTER_FILE, data)
 
-    return str(data["count"]).zfill(4)
+    return str(data[tipo]).zfill(4)
 
-def get_guild_config(guild_id):
-    data = load(GUILDS_FILE)
-    return data.get(str(guild_id))
+  
 
 def save_ticket(user_id, guild_id, channel_id, tipo):
     data = load(TICKETS_FILE)
