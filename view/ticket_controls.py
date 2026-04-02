@@ -1,7 +1,7 @@
 import discord
 from discord.ui import View
-from systems.ticket_system import remove_ticket
-from systems.transcript import generate_transcript
+from system.ticket_system import remove_ticket
+from system.transcript import generate_transcript
 from database.db import load
 
 GUILDS_FILE = "database/guilds.json"
