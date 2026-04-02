@@ -132,7 +132,19 @@ if user_data:
 
 save(RESPONSES_FILE, data)
         await self.user.send("✅ Tu formulario fue aprobado")
-        await interaction.message.edit(view=None)
+embed = interaction.message.embeds[0]
+embed.color = discord.Color.green()
+
+for field in embed.fields:
+    if field.name == "📊 Estado":
+        embed.set_field_at(
+            embed.fields.index(field),
+            name="📊 Estado",
+            value="🟢 Aprobado",
+            inline=False
+        )
+
+await interaction.message.edit(embed=embed, view=None)
         await interaction.response.send_message("Aprobado", ephemeral=True)
 
     @discord.ui.button(label="Rechazar", style=discord.ButtonStyle.danger)
