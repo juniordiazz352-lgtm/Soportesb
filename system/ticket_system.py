@@ -74,4 +74,4 @@ async def create_ticket(guild, user, tipo):
         overwrites=overwrites
     )
 
-    await channel.send(f"{user.mention} ticket creado")
+await channel.send(f"{user.mention} ✅ ticket creado")
