@@ -171,7 +171,20 @@ if user_data:
 
 save(RESPONSES_FILE, data)
 
-    async def on_submit(self, interaction):
-        await self.user.send(f"❌ Rechazado\nMotivo: {self.motivo.value}")
-        await self.message.edit(view=None)
-        await interaction.response.send_message("Rechazado", ephemeral=True)
+    embed = self.message.embeds[0]
+embed.color = discord.Color.red()
+
+for field in embed.fields:
+    if field.name == "📊 Estado":
+        embed.set_field_at(
+            embed.fields.index(field),
+            name="📊 Estado",
+            value=f"🔴 Rechazado\nMotivo: {self.motivo.value}",
+            inline=False
+        )
+
+await self.message.edit(embed=embed, view=None)
+
+await self.user.send(f"❌ Tu formulario fue rechazado\n📌 Motivo: {self.motivo.value}")
+
+await interaction.response.send_message("Rechazado", ephemeral=True)
