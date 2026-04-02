@@ -7,9 +7,11 @@ def panel_embed():
         color=discord.Color.blurple()
     )
 
-def ticket_embed(user, tipo, ticket_id):
-    return discord.Embed(
-        title=f"🎫 Ticket #{ticket_id}",
-        description=f"{user.mention} abrió un ticket de tipo **{tipo}**.",
+await channel.send(
+    embed=discord.Embed(
+        title=f"🎫 Ticket {tipo.upper()} #{ticket_number}",
+        description=f"{user.mention} abrió un ticket.",
         color=discord.Color.green()
-    )
+    ),
+    view=TicketControls(user.id)
+)
