@@ -1,6 +1,7 @@
 import discord
 from discord.ui import View, button
 import asyncio
+from system.transcript_system import generate_transcript
 
 class TicketControls(View):
     def __init__(self, owner_id):
