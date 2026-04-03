@@ -1,14 +1,16 @@
 import discord
 from discord.ui import Modal, TextInput
 from system.form_system import get_form
+from view.form_review_view import FormReviewView
 from system.history_system import add_history
+
 
 class DynamicForm(Modal):
     def __init__(self, guild_id, form_name):
         self.form = get_form(guild_id, form_name)
         self.form_name = form_name
 
-        super().__init__(title=f"Formulario: {form_name}")
+        super().__init__(title=f"📋 {form_name}")
 
         self.inputs = []
 
@@ -17,74 +19,67 @@ class DynamicForm(Modal):
             self.inputs.append(inp)
             self.add_item(inp)
 
-   async def on_submit(self, interaction: discord.Interaction):
-    channel = interaction.guild.get_channel(self.form["channel"])
+    async def on_submit(self, interaction: discord.Interaction):
+        channel = interaction.guild.get_channel(self.form["channel"])
 
-    # 🎨 EMBED PRO
-    embed = discord.Embed(
-        title=f"📋 Nuevo Formulario • {self.form_name}",
-        description=f"👤 {interaction.user.mention}",
-        color=discord.Color.orange()
-    )
-
-    respuestas_texto = ""
-
-    # 📌 RESPUESTAS
-    for i, inp in enumerate(self.inputs, start=1):
-        embed.add_field(
-            name=f"📝 {i}. {inp.label}",
-            value=f"```{inp.value}```",
-            inline=False
-        )
-        respuestas_texto += f"{inp.label}: {inp.value}\n"
-
-    # 🧾 INFO EXTRA
-    embed.add_field(
-        name="📊 Información",
-        value=(
-            f"🆔 ID: `{interaction.user.id}`\n"
-            f"📅 <t:{int(discord.utils.utcnow().timestamp())}:F>"
-        ),
-        inline=False
-    )
-
-    embed.set_thumbnail(url=interaction.user.display_avatar.url)
-    embed.set_footer(text="Sistema de Formularios • Nivel Empresa")
-
-    # 📊 GUARDAR HISTORIAL
-    from system.history_system import add_history
-    add_history(interaction.user.id, "formulario", respuestas_texto)
-
-    # 🚀 ENVIAR AL CANAL CON BOTONES STAFF
-    await channel.send(
-        embed=embed,
-        view=FormReviewView(interaction.user.id)
-    )
-
-    # 📩 DM PRO AL USUARIO
-    try:
-        dm_embed = discord.Embed(
-            title="📨 Formulario enviado",
-            description="Tu formulario fue enviado correctamente",
-            color=discord.Color.green()
+        embed = discord.Embed(
+            title=f"📋 Nuevo Formulario • {self.form_name}",
+            description=f"👤 {interaction.user.mention}",
+            color=discord.Color.orange()
         )
 
-        for inp in self.inputs:
-            dm_embed.add_field(
-                name=f"📝 {inp.label}",
+        respuestas_texto = ""
+
+        for i, inp in enumerate(self.inputs, start=1):
+            embed.add_field(
+                name=f"📝 {i}. {inp.label}",
                 value=f"```{inp.value}```",
                 inline=False
             )
+            respuestas_texto += f"{inp.label}: {inp.value}\n"
 
-        dm_embed.set_footer(text="Recibirás respuesta pronto")
+        embed.add_field(
+            name="📊 Información",
+            value=(
+                f"🆔 ID: `{interaction.user.id}`\n"
+                f"📅 <t:{int(discord.utils.utcnow().timestamp())}:F>"
+            ),
+            inline=False
+        )
 
-        await interaction.user.send(embed=dm_embed)
+        embed.set_thumbnail(url=interaction.user.display_avatar.url)
+        embed.set_footer(text="Sistema de Formularios • Nivel Empresa")
 
-    except:
-        pass
+        # 📊 HISTORIAL
+        add_history(interaction.user.id, "formulario", respuestas_texto)
 
-    # ⚡ RESPUESTA RÁPIDA
-    await interaction.response.send_message(
-        "✅ Formulario enviado correctamente",
-        ephemeral=True
-    )
+        # 📤 ENVIAR A CANAL
+        await channel.send(
+            embed=embed,
+            view=FormReviewView(interaction.user.id)
+        )
+
+        # 📩 DM
+        try:
+            dm_embed = discord.Embed(
+                title="📨 Formulario enviado",
+                description="Tu formulario fue enviado correctamente",
+                color=discord.Color.green()
+            )
+
+            for inp in self.inputs:
+                dm_embed.add_field(
+                    name=f"📝 {inp.label}",
+                    value=f"```{inp.value}```",
+                    inline=False
+                )
+
+            await interaction.user.send(embed=dm_embed)
+
+        except:
+            pass
+
+        await interaction.response.send_message(
+            "✅ Formulario enviado correctamente",
+            ephemeral=True
+        )
