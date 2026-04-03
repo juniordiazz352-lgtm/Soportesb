@@ -1,8 +1,11 @@
 import discord
+from discord.ui import Modal, TextInput, View, button
+from datetime import datetime
 from database.db import load, save
 
 FORMS_FILE = "database/forms.json"
 RESPONSES_FILE = "database/responses.json"
+
 
 # ========================
 # 📋 FORMULARIOS
@@ -12,27 +15,24 @@ def get_forms(guild_id):
     data = load(FORMS_FILE)
     return data.get(str(guild_id), {})
 
+
 def save_form(guild_id, name, preguntas, canal_id):
     data = load(FORMS_FILE)
 
     if str(guild_id) not in data:
         data[str(guild_id)] = {}
 
-   data[str(user_id)].append({
-    "form": form_name,
-    "respuestas": respuestas,
-    "estado": "pendiente"
-})
+    data[str(guild_id)][name] = {
+        "preguntas": preguntas,
+        "canal": canal_id
+    }
 
     save(FORMS_FILE, data)
 
-def delete_form(guild_id, name):
+
+def get_form(guild_id, name):
     data = load(FORMS_FILE)
-
-    if str(guild_id) in data and name in data[str(guild_id)]:
-        del data[str(guild_id)][name]
-
-    save(FORMS_FILE, data)
+    return data.get(str(guild_id), {}).get(name)
 
 
 # ========================
@@ -47,8 +47,22 @@ def save_response(user_id, form_name, respuestas):
 
     data[str(user_id)].append({
         "form": form_name,
-        "respuestas": respuestas
+        "respuestas": respuestas,
+        "estado": "pendiente",
+        "fecha": datetime.utcnow().isoformat()
     })
+
+    save(RESPONSES_FILE, data)
+
+
+def update_response_status(user_id, status, motivo=None):
+    data = load(RESPONSES_FILE)
+
+    user_data = data.get(str(user_id), [])
+    if user_data:
+        user_data[-1]["estado"] = status
+        if motivo:
+            user_data[-1]["motivo"] = motivo
 
     save(RESPONSES_FILE, data)
 
@@ -57,179 +71,164 @@ def save_response(user_id, form_name, respuestas):
 # 📋 MODAL DINÁMICO
 # ========================
 
-class DynamicForm(discord.ui.Modal):
-    def __init__(self, form_name, preguntas, canal_id):
-        super().__init__(title=form_name)
+class DynamicForm(Modal):
+    def __init__(self, guild_id, form_name):
+        form = get_form(guild_id, form_name)
+
+        super().__init__(title=f"📋 {form_name}")
+
         self.form_name = form_name
-        self.canal_id = canal_id
+        self.canal_id = form["canal"]
         self.inputs = []
 
-        for pregunta in preguntas[:5]:
-            inp = discord.ui.TextInput(label=pregunta)
+        for pregunta in form["preguntas"][:5]:
+            inp = TextInput(label=pregunta, required=True)
             self.inputs.append(inp)
             self.add_item(inp)
 
     async def on_submit(self, interaction: discord.Interaction):
         canal = interaction.guild.get_channel(self.canal_id)
 
+        if not canal:
+            return await interaction.response.send_message(
+                "❌ Canal no encontrado",
+                ephemeral=True
+            )
+
         respuestas = {inp.label: inp.value for inp in self.inputs}
 
+        # 💾 GUARDAR
         save_response(interaction.user.id, self.form_name, respuestas)
 
-       from datetime import datetime
+        # 🎨 EMBED PRO
+        embed = discord.Embed(
+            title="📋 Nueva Aplicación",
+            color=discord.Color.orange(),
+            timestamp=datetime.utcnow()
+        )
 
-from datetime import datetime
+        embed.set_author(
+            name=f"{interaction.user}",
+            icon_url=interaction.user.display_avatar.url
+        )
 
-embed = discord.Embed(
-    title="📋 Nueva Aplicación",
-    description="Se ha recibido una nueva aplicación",
-    color=discord.Color.orange(),
-    timestamp=datetime.utcnow()
-)
+        embed.set_thumbnail(url=interaction.user.display_avatar.url)
 
-embed.set_author(
-    name=f"{interaction.user} | Aplicación",
-    icon_url=interaction.user.display_avatar.url
-)
+        embed.add_field(
+            name="👤 Usuario",
+            value=f"{interaction.user.mention}\n`{interaction.user.id}`",
+            inline=True
+        )
 
-embed.set_thumbnail(url=interaction.user.display_avatar.url)
+        embed.add_field(
+            name="📄 Formulario",
+            value=f"`{self.form_name}`",
+            inline=True
+        )
 
-embed.add_field(
-    name="👤 Usuario",
-    value=f"{interaction.user.mention}\n`{interaction.user.id}`",
-    inline=True
-)
-
-embed.add_field(
-    name="📄 Formulario",
-    value=f"`{self.form_name}`",
-    inline=True
-)
-
-embed.add_field(
-    name="📊 Estado",
-    value="🟡 Pendiente",
-    inline=False
-)
-
-embed.add_field(
-    name="━━━━━━━━━━━━━━━━━━━━━━",
-    value="🧠 **Respuestas del usuario:**",
-    inline=False
-)
-
-for k, v in respuestas.items():
-    embed.add_field(
-        name=f"➤ {k}",
-        value=f"```{v[:1000]}```",
-        inline=False
-    )
-
-embed.set_footer(
-    text=f"Sistema de Formularios • ID: {interaction.user.id}"
-)
-
-embed.add_field(name="👤 Usuario", value=interaction.user.mention, inline=True)
-embed.add_field(name="📄 Formulario", value=self.form_name, inline=True)
-embed.add_field(name="📊 Estado", value="🟡 Pendiente", inline=False)
-
-respuestas_texto = "\n".join(
-    [f"**{k}:** {v}" for k, v in respuestas.items()]
-)
-
-embed.add_field(
-    name="🧠 Respuestas",
-    value=respuestas_texto[:1024],
-    inline=False
-)
-
-embed.set_footer(text=f"ID Usuario: {interaction.user.id}")
+        embed.add_field(
+            name="📊 Estado",
+            value="🟡 Pendiente",
+            inline=False
+        )
 
         for k, v in respuestas.items():
-            embed.add_field(name=k, value=v, inline=False)
+            embed.add_field(
+                name=f"📝 {k}",
+                value=f"```{v[:1000]}```",
+                inline=False
+            )
 
-        embed.add_field(name="Usuario", value=interaction.user.mention)
+        embed.set_footer(text="Sistema • Formularios")
 
-        await canal.send(embed=embed, view=ReviewView(interaction.user))
+        await canal.send(
+            embed=embed,
+            view=ReviewView(interaction.user)
+        )
 
-        await interaction.response.send_message("✅ Formulario enviado", ephemeral=True)
+        # 📩 DM
+        try:
+            await interaction.user.send("📨 Tu formulario fue enviado")
+        except:
+            pass
+
+        await interaction.response.send_message(
+            "✅ Formulario enviado",
+            ephemeral=True
+        )
 
 
 # ========================
 # 👮 REVIEW STAFF
 # ========================
 
-class ReviewView(discord.ui.View):
+class ReviewView(View):
     def __init__(self, user):
         super().__init__(timeout=None)
         self.user = user
 
-    @discord.ui.button(label="Aprobar", style=discord.ButtonStyle.success)
+    @button(label="✅ Aprobar", style=discord.ButtonStyle.success)
     async def approve(self, interaction, button):
-        from database.db import load, save
-RESPONSES_FILE = "database/responses.json"
 
-data = load(RESPONSES_FILE)
+        update_response_status(self.user.id, "aprobado")
 
-user_data = data.get(str(self.user.id), [])
-if user_data:
-    user_data[-1]["estado"] = "aprobado"
+        try:
+            await self.user.send("✅ Tu formulario fue aprobado")
+        except:
+            pass
 
-save(RESPONSES_FILE, data)
-        await self.user.send("✅ Tu formulario fue aprobado")
-embed = interaction.message.embeds[0]
-embed.color = discord.Color.green()
+        embed = interaction.message.embeds[0]
+        embed.color = discord.Color.green()
 
-for field in embed.fields:
-    if field.name == "📊 Estado":
-        embed.set_field_at(
-            embed.fields.index(field),
-            name="📊 Estado",
-            value="🟢 Aprobado",
-            inline=False
-        )
+        for i, field in enumerate(embed.fields):
+            if field.name == "📊 Estado":
+                embed.set_field_at(
+                    i,
+                    name="📊 Estado",
+                    value="🟢 Aprobado",
+                    inline=False
+                )
 
-await interaction.message.edit(embed=embed, view=None)
+        await interaction.message.edit(embed=embed, view=None)
         await interaction.response.send_message("Aprobado", ephemeral=True)
 
-    @discord.ui.button(label="Rechazar", style=discord.ButtonStyle.danger)
+    @button(label="❌ Rechazar", style=discord.ButtonStyle.danger)
     async def reject(self, interaction, button):
-        await interaction.response.send_modal(RejectModal(self.user, interaction.message))
+        await interaction.response.send_modal(
+            RejectModal(self.user, interaction.message)
+        )
 
 
-class RejectModal(discord.ui.Modal, title="Motivo del rechazo"):
-    motivo = discord.ui.TextInput(label="Motivo", style=discord.TextStyle.paragraph)
+class RejectModal(Modal, title="Motivo del rechazo"):
+    motivo = TextInput(label="Motivo", style=discord.TextStyle.paragraph)
 
     def __init__(self, user, message):
         super().__init__()
         self.user = user
         self.message = message
-        
-from database.db import load, save
-RESPONSES_FILE = "database/responses.json"
 
-data = load(RESPONSES_FILE)
+    async def on_submit(self, interaction: discord.Interaction):
 
-user_data = data.get(str(self.user.id), [])
-if user_data:
-    user_data[-1]["estado"] = "rechazado"
+        update_response_status(self.user.id, "rechazado", self.motivo.value)
 
-save(RESPONSES_FILE, data)
+        try:
+            await self.user.send(
+                f"❌ Rechazado\n📌 Motivo: {self.motivo.value}"
+            )
+        except:
+            pass
 
-    embed = self.message.embeds[0]
-embed.color = discord.Color.red()
+        embed = self.message.embeds[0]
+        embed.color = discord.Color.red()
 
-for field in embed.fields:
-    if field.name == "📊 Estado":
-        embed.set_field_at(
-            embed.fields.index(field),
-            name="📊 Estado",
-            value=f"🔴 Rechazado\nMotivo: {self.motivo.value}",
-            inline=False
-        )
+        for i, field in enumerate(embed.fields):
+            if field.name == "📊 Estado":
+                embed.set_field_at(
+                    i,
+                    name="📊 Estado",
+                    value=f"🔴 Rechazado\n{self.motivo.value}",
+                    inline=False
+                )
 
-await self.message.edit(embed=embed, view=None)
-
-await self.user.send(f"❌ Tu formulario fue rechazado\n📌 Motivo: {self.motivo.value}")
-
-await interaction.response.send_message("Rechazado", ephemeral=True)
+        await self.message.edit(embed=embed, view=None)
+        await interaction.response.send_message("Rechazado", ephemeral=True)
