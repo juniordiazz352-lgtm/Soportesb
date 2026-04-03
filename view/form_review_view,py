@@ -6,18 +6,43 @@ class FormReviewView(View):
         super().__init__(timeout=None)
         self.user_id = user_id
 
-    @button(label="Aprobar", style=discord.ButtonStyle.success)
-    async def approve(self, interaction, button):
-        user = await interaction.client.fetch_user(self.user_id)
-        await user.send("✅ Formulario aprobado")
-        await interaction.response.send_message("Aprobado", ephemeral=True)
-        self.disable_all_items()
-        await interaction.message.edit(view=self)
+    @button(label="✅ Aprobar", style=discord.ButtonStyle.success, emoji="🔥")
+async def approve(self, interaction, button):
 
-    @button(label="Rechazar", style=discord.ButtonStyle.danger)
-    async def reject(self, interaction, button):
-        user = await interaction.client.fetch_user(self.user_id)
-        await user.send("❌ Formulario rechazado")
-        await interaction.response.send_message("Rechazado", ephemeral=True)
-        self.disable_all_items()
-        await interaction.message.edit(view=self)
+    user = await interaction.client.fetch_user(self.user_id)
+
+    embed = discord.Embed(
+        title="✅ Formulario Aprobado",
+        description="Tu solicitud fue aceptada",
+        color=discord.Color.green()
+    )
+
+    try:
+        await user.send(embed=embed)
+    except:
+        pass
+
+    await interaction.response.send_message("🔥 Aprobado", ephemeral=True)
+    self.disable_all_items()
+    await interaction.message.edit(view=self)
+
+
+@button(label="❌ Rechazar", style=discord.ButtonStyle.danger, emoji="💀")
+async def reject(self, interaction, button):
+
+    user = await interaction.client.fetch_user(self.user_id)
+
+    embed = discord.Embed(
+        title="❌ Formulario Rechazado",
+        description="Tu solicitud fue rechazada",
+        color=discord.Color.red()
+    )
+
+    try:
+        await user.send(embed=embed)
+    except:
+        pass
+
+    await interaction.response.send_message("💀 Rechazado", ephemeral=True)
+    self.disable_all_items()
+    await interaction.message.edit(view=self)
