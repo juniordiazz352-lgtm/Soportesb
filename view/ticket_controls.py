@@ -9,14 +9,29 @@ class TicketControls(View):
         self.owner_id = owner_id
         self.claimed_by = None
 
-    @button(label="🔒 Cerrar", style=discord.ButtonStyle.danger)
-    async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not interaction.user.guild_permissions.manage_channels:
-            return await interaction.response.send_message("❌ Sin permisos", ephemeral=True)
+   @button(label="🔒 Cerrar", style=discord.ButtonStyle.danger)
+async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
 
-        await interaction.response.send_message("🔒 Cerrando ticket...", ephemeral=True)
-        await asyncio.sleep(3)
-        await interaction.channel.delete()
+    if not interaction.user.guild_permissions.manage_channels:
+        return await interaction.response.send_message("❌ Sin permisos", ephemeral=True)
+
+    await interaction.response.send_message("⏳ Generando transcript...", ephemeral=True)
+
+    # 📄 GENERAR HTML
+    transcript = await generate_transcript(interaction.channel)
+
+    # 📂 LOG CHANNEL
+    log_channel = discord.utils.get(interaction.guild.text_channels, name="ticket-logs")
+
+    if not log_channel:
+        log_channel = await interaction.guild.create_text_channel("ticket-logs")
+
+    await log_channel.send(
+        content=f"📁 Transcript de {interaction.channel.name}",
+        file=transcript
+    )
+
+    await interaction.channel.delete()
 
     @button(label="👨‍💼 Reclamar", style=discord.ButtonStyle.primary)
     async def claim(self, interaction: discord.Interaction, button: discord.ui.Button):
