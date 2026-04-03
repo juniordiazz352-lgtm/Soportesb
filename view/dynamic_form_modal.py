@@ -1,6 +1,7 @@
 import discord
 from discord.ui import Modal, TextInput
 from system.form_system import get_form
+from system.history_system import add_history
 
 class DynamicForm(Modal):
     def __init__(self, guild_id, form_name):
