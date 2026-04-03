@@ -62,3 +62,13 @@ async def generate_transcript(channel: discord.TextChannel):
     )
 
     return file
+
+async def generate_transcript(channel):
+    messages = []
+
+    async for msg in channel.history(limit=100):
+        messages.append(f"{msg.author}: {msg.content}")
+
+    html = "<br>".join(messages)
+
+    return html
