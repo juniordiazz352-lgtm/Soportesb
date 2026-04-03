@@ -34,5 +34,19 @@ async def crear_form(ctx, nombre: str, canal: discord.TextChannel, *, preguntas)
 async def panel_form(ctx, nombre: str):
     await ctx.send("Formulario", view=FormPanel(ctx.guild.id, nombre))
 
+from flask import Flask, render_template
+from database.mongo import responses
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def index():
+    data = list(responses.find().limit(10))
+    return render_template("index.html", data=data)
+
+
+app.run(host="0.0.0.0", port=10000)
+
 
 bot.run(TOKEN)
