@@ -234,3 +234,39 @@ class RejectModal(Modal, title="Motivo del rechazo"):
 
         await self.message.edit(embed=embed, view=None)
         await interaction.response.send_message("Rechazado", ephemeral=True)
+
+
+from database.mongo import forms, responses
+from datetime import datetime
+
+
+def save_form(guild_id, name, preguntas, canal_id):
+    forms.update_one(
+        {"guild_id": guild_id, "name": name},
+        {"$set": {
+            "preguntas": preguntas,
+            "canal": canal_id
+        }},
+        upsert=True
+    )
+
+
+def get_form(guild_id, name):
+    return forms.find_one({"guild_id": guild_id, "name": name})
+
+
+def save_response(user_id, form_name, respuestas):
+    responses.insert_one({
+        "user_id": user_id,
+        "form": form_name,
+        "respuestas": respuestas,
+        "estado": "pendiente",
+        "fecha": datetime.utcnow()
+    })
+
+
+def update_response_status(user_id, estado, motivo=None):
+    responses.update_one(
+        {"user_id": user_id},
+        {"$set": {"estado": estado, "motivo": motivo}}
+    )
