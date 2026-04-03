@@ -2,6 +2,8 @@ import discord
 from discord.ui import Modal, TextInput, View, button
 from datetime import datetime
 from database.db import load, save
+from database.mongo import forms_col, responses_col
+from datetime import datetime
 
 FORMS_FILE = "database/forms.json"
 RESPONSES_FILE = "database/responses.json"
