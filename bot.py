@@ -5,7 +5,7 @@ import os
 from view.panel_view import PanelView
 from view.form_panel import FormPanel
 from utils.embeds import panel_embed
-from system.form_system import create_form
+from system.form_system import save_form
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
