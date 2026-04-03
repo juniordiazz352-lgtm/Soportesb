@@ -32,22 +32,6 @@ def get_ticket_number(guild_id):
     return data[gid]
 
 
-# 🎟️ CREAR TICKET
-async def create_ticket(guild: discord.Guild, user: discord.Member, tipo: str):
-    try:
-        # 📁 CATEGORÍA
-        category = discord.utils.get(guild.categories, name="Tickets")
-        if not category:
-            category = await guild.create_category("Tickets")
-
-        # 🔢 NÚMERO
-        number = get_ticket_number(guild.id)
-
-        # 🔒 PERMISOS
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(view_channel=False),
-            user: discord.PermissionOverwrite(view_channel=True, send_messages=True),
-            guild.me: discord.PermissionOverwrite(view_channel=True)
         }
 
         # 📂 CREAR CANAL
@@ -92,3 +76,26 @@ async def create_ticket(guild: discord.Guild, user: discord.Member, tipo: str):
 
     except Exception as e:
         print("❌ ERROR EN TICKET:", e)
+
+import discord
+
+
+async def create_ticket(guild, user, tipo):
+    category = discord.utils.get(guild.categories, name="Tickets")
+
+    if not category:
+        category = await guild.create_category("Tickets")
+
+    overwrites = {
+        guild.default_role: discord.PermissionOverwrite(view_channel=False),
+        user: discord.PermissionOverwrite(view_channel=True),
+        guild.me: discord.PermissionOverwrite(view_channel=True)
+    }
+
+    channel = await guild.create_text_channel(
+        name=f"{tipo}-{user.name}",
+        category=category,
+        overwrites=overwrites
+    )
+
+    await channel.send(f"{user.mention} 🎟️ Ticket creado")
