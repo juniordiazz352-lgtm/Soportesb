@@ -48,5 +48,6 @@ def index():
 
 app.run(host="0.0.0.0", port=10000)
 
+threading.Thread(target=run_web).start()
 
 bot.run(TOKEN)
